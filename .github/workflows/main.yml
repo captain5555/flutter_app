@@ -6,9 +6,6 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: nas-material-manager  # 全局指定工作目录
     steps:
       - uses: actions/checkout@v4
 
@@ -16,21 +13,23 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
-          cache: true
 
       - name: Install dependencies
         run: |
+          cd nas-material-manager
           flutter pub get
           cd ios
           pod repo update
           pod install
-          cd ..
+          cd ../..
 
       - name: Build iOS
-        run: flutter build ios --release --no-codesign
+        run: |
+          cd nas-material-manager
+          flutter build ios --release --no-codesign
 
       - name: Upload iOS App
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/iphoneos/
+          path: nas-material-manager/build/ios/iphoneos/
