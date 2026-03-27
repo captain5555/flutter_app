@@ -16,19 +16,31 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # 自动扫描并找到 pubspec.yaml 所在的项目目录
+          # 1. 自动找到 pubspec.yaml 目录
           PROJECT_DIR=$(find . -name "pubspec.yaml" -type f -exec dirname {} \;)
           echo "✅ 找到项目目录: $PROJECT_DIR"
-          # 进入项目目录并安装依赖
+          
+          # 2. 进入项目目录
           cd "$PROJECT_DIR"
-          flutter pub get
-          cd ios
-          pod repo update
-          pod install
+          
+          # 3. 自动找到 ios 目录 (如果项目里有 ios 文件夹)
+          IOS_DIR=$(find . -name "ios" -type d | head -n 1)
+          if [ -n "$IOS_DIR" ]; then
+            echo "✅ 找到 iOS 目录: $IOS_DIR"
+            cd "$IOS_DIR"
+            pod repo update
+            pod install
+          else
+            echo "⚠️  未找到 iOS 目录，可能是纯 Flutter 项目或已移动位置"
+          fi
 
       - name: Build iOS
         run: |
+          # 1. 自动找到 pubspec.yaml 目录
           PROJECT_DIR=$(find . -name "pubspec.yaml" -type f -exec dirname {} \;)
+          echo "✅ 找到项目目录: $PROJECT_DIR"
+          
+          # 2. 进入项目目录并构建
           cd "$PROJECT_DIR"
           flutter build ios --release --no-codesign
 
@@ -36,4 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: ${{ env.PROJECT_DIR }}/build/ios/iphoneos/
+          path: build/ios/iphoneos/
