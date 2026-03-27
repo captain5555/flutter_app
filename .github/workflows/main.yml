@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd nas-material-manager
+          cd nas-material-manager/nas-材料管理器
           flutter pub get
           cd ios
           pod repo update
@@ -24,11 +24,11 @@ jobs:
 
       - name: Build iOS
         run: |
-          cd nas-material-manager
+          cd nas-material-manager/nas-材料管理器
           flutter build ios --release --no-codesign
 
       - name: Upload iOS App
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: nas-material-manager/build/ios/iphoneos/
+          path: nas-material-manager/nas-材料管理器/build/ios/iphoneos/
