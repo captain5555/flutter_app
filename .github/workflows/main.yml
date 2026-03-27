@@ -16,10 +16,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # 1. 进入真正的 Flutter 项目根目录（有 pubspec.yaml 的地方）
+          # 进入真正的 Flutter 项目目录 (包含 pubspec.yaml 的地方)
           cd nas-material-manager/flutter
           flutter pub get
-          # 2. 回到上级目录，进入 ios 文件夹执行 pod 命令
+          # 进入上级的 ios 目录安装 pod
           cd ../ios
           pod repo update
           pod install
