@@ -16,19 +16,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd nas-material-manager
+          # 1. 进入真正的 Flutter 项目根目录（有 pubspec.yaml 的地方）
+          cd nas-material-manager/flutter
           flutter pub get
-          cd ios
+          # 2. 回到上级目录，进入 ios 文件夹执行 pod 命令
+          cd ../ios
           pod repo update
           pod install
 
       - name: Build iOS
         run: |
-          cd nas-material-manager
+          cd nas-material-manager/flutter
           flutter build ios --release --no-codesign
 
       - name: Upload iOS App
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: nas-material-manager/build/ios/iphoneos/
+          path: nas-material-manager/flutter/build/ios/iphoneos/
