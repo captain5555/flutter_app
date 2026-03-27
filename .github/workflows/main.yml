@@ -16,7 +16,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          ls -la
           cd nas-material-manager
+          ls -la
           flutter pub get
           cd ios
           pod repo update
