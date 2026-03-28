@@ -1,0 +1,88 @@
+/* User Page Styles */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.login-container h1 {
+    margin-bottom: 32px;
+    color: #333;
+}
+
+.login-container input {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.app-header {
+    background: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+    font-size: 20px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.app-nav {
+    background: white;
+    padding: 0 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 4px;
+}
+
+.nav-tab {
+    padding: 16px 24px;
+    background: none;
+    color: #666;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+}
+
+.nav-tab:hover {
+    background: #f8f9fa;
+}
+
+.nav-tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.toolbar {
+    background: white;
+    padding: 12px 24px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+#batch-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.materials-container {
+    padding: 0;
+}
