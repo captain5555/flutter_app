@@ -243,7 +243,9 @@ interface Storage {
 |------|------|------|------|
 | POST | `/api/auth/login` | 用户登录 | 公开 |
 | POST | `/api/auth/logout` | 用户登出 | 已认证 |
+| POST | `/api/auth/refresh` | 刷新 Token | 已认证 |
 | GET | `/api/auth/me` | 获取当前用户信息 | 已认证 |
+| GET | `/health` | 健康检查 | 公开 |
 
 ### 用户 API
 
@@ -319,7 +321,27 @@ interface Storage {
 - 文件类型白名单：图片（jpg, png, gif, webp）、视频（mp4, mov, avi）
 - 文件大小限制：图片 50MB，视频 500MB
 - 文件名清洗：防止路径遍历攻击
+- 同名文件处理：自动重命名（文件名 + 时间戳）
+- 并发上传限制：单个用户最多 3 个并发上传
 - 病毒扫描：预留接口
+
+### 6. 缩略图生成
+- 图片上传后自动生成缩略图
+- 缩略图尺寸：200x200（居中裁剪）
+- 缩略图格式：JPEG（质量 80%）
+- 使用库：sharp（Node.js 图片处理库）
+- 视频缩略图：截取第 1 秒画面
+
+### 7. 批量操作事务处理
+- 所有批量操作使用数据库事务
+- 中途失败自动回滚
+- 返回成功/失败明细
+
+### 8. HTTPS 与安全增强
+- 生产环境强制 HTTPS
+- API 速率限制：每个用户每分钟最多 60 次请求
+- 敏感数据脱敏：日志中不记录密码、Token 等
+- CORS 配置：支持配置允许的域名列表
 
 ## 部署方案
 
@@ -414,6 +436,17 @@ services:
 | updated_at | DATETIME | 更新时间 |
 | deleted_at | DATETIME | 删除时间 |
 
+### folders 表
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INTEGER | 主键 |
+| user_id | INTEGER | 用户 ID |
+| name | VARCHAR(100) | 文件夹名称 |
+| parent_id | INTEGER | 父文件夹 ID（NULL 表示根目录） |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 更新时间 |
+
 ### operation_logs 表
 
 | 字段 | 类型 | 说明 |
@@ -453,6 +486,10 @@ services:
 
 ## iOS APP 对接指南
 
+### 技术选型建议
+- 推荐使用 Swift + SwiftUI（现代原生开发）
+- 备选方案：React Native（如需后续支持 Android）
+
 ### API 基础信息
 - Base URL: `http://your-server:3000/api`
 - 认证方式: Bearer Token (JWT)
@@ -461,13 +498,47 @@ services:
 ### 认证流程
 1. 调用 `/api/auth/login` 获取 Token
 2. 后续请求 Header 中携带: `Authorization: Bearer <token>`
-3. Token 过期前调用刷新接口或重新登录
+3. Token 过期前调用 `/api/auth/refresh` 刷新 Token
+
+### iOS APP 功能范围（建议）
+- 用户登录/登出
+- 素材浏览（网格/列表视图）
+- 素材上传（相册/拍照）
+- 素材详情查看
+- 素材删除/恢复
+- 文件夹管理
+- 深色/浅色主题
 
 ### 常用 API 示例
 详见「API 设计」章节。
 
+## v2 到 v3 迁移计划
+
+### 数据迁移
+1. 备份 v2 数据库和文件
+2. 使用迁移脚本导入数据到 v3
+3. 验证数据完整性
+4. 迁移文件到新的目录结构
+
+### 迁移脚本功能
+- 用户数据迁移
+- 素材元数据迁移
+- 文件路径更新
+- 自动创建缩略图
+
 ---
 
-**设计文档版本**: v1.0
+**设计文档版本**: v1.1
 **创建日期**: 2026-03-28
 **最后更新**: 2026-03-28
+
+**更新内容**:
+- 添加 folders 表结构定义
+- 添加 Token 刷新 API
+- 添加健康检查端点
+- 补充缩略图生成机制说明
+- 补充批量操作事务处理说明
+- 补充文件上传策略（同名文件处理、并发控制）
+- 补充 HTTPS 与安全增强说明
+- 添加 iOS APP 技术选型建议和功能范围
+- 添加 v2 到 v3 迁移计划
