@@ -182,6 +182,52 @@ class API {
         });
     }
 
+    downloadMaterial(id) {
+        const token = this.getToken();
+        window.location.href = `${this.baseUrl}/materials/${id}/download?token=${encodeURIComponent(token)}`;
+    }
+
+    // AI
+    async getAISettings() {
+        return this.request('/ai/settings');
+    }
+
+    async saveAISettings(settings) {
+        return this.request('/ai/settings', {
+            method: 'PUT',
+            body: JSON.stringify(settings)
+        });
+    }
+
+    async generateTitle(image, currentTitle) {
+        return this.request('/ai/generate-title', {
+            method: 'POST',
+            body: JSON.stringify({ image, current_title: currentTitle })
+        });
+    }
+
+    async generateDescription(image, currentDescription) {
+        return this.request('/ai/generate-description', {
+            method: 'POST',
+            body: JSON.stringify({ image, current_description: currentDescription })
+        });
+    }
+
+    async translate(text) {
+        return this.request('/ai/translate', {
+            method: 'POST',
+            body: JSON.stringify({ text })
+        });
+    }
+
+    // Auth - simplified login
+    async loginSimple(username) {
+        return this.request('/auth/login-simple', {
+            method: 'POST',
+            body: JSON.stringify({ username })
+        });
+    }
+
     // Folders
     async getUserFolders(userId) {
         return this.request(`/folders/user/${userId}`);
