@@ -99,6 +99,6 @@ CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(creat
 -- Password hash generated with bcrypt
 INSERT OR IGNORE INTO users (id, username, password_hash, role) VALUES
   (1, 'admin', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'admin'),
-  ('user1', 'user1', '', 'user'),
-  ('user2', 'user2', '', 'user'),
-  ('user3', 'user3', '', 'user');
+  (2, 'user1', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'user'),
+  (3, 'user2', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'user'),
+  (4, 'user3', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'user');
