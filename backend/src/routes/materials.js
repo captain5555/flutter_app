@@ -349,11 +349,6 @@ router.post('/batch/move', authenticateToken, asyncHandler(async (req, res) => {
   sendSuccess(res, result);
 }));
 
-function canAccessUser(req, userId) {
-  if (isAdmin(req)) return true;
-  return req.user.id === userId;
-}
-
 // Download material (video)
 router.get('/:id/download', authenticateToken, asyncHandler(async (req, res) => {
   const materialId = parseInt(req.params.id);
