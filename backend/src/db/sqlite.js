@@ -207,7 +207,7 @@ class SQLiteDatabase extends AbstractDatabase {
       const fields = [];
       const values = [];
 
-      ['file_name', 'folder_type', 'usage_tag', 'viral_tag'].forEach(key => {
+      ['file_name', 'folder_type', 'usage_tag', 'viral_tag', 'title', 'description'].forEach(key => {
         if (data[key] !== undefined) {
           fields.push(`${key} = ?`);
           values.push(data[key]);
@@ -479,6 +479,44 @@ class SQLiteDatabase extends AbstractDatabase {
           else resolve({ moved: this.changes });
         }
       );
+    });
+  }
+
+  // Get all trash materials (admin)
+  async getAllTrashMaterials() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        'SELECT m.*, u.username FROM materials m LEFT JOIN users u ON m.user_id = u.id WHERE m.is_deleted = 1 ORDER BY m.deleted_at DESC',
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  // Delete user and transfer materials
+  async deleteUserAndTransferMaterials(userId, targetUserId = 1) {
+    return new Promise((resolve, reject) => {
+      this.db.serialize(() => {
+        // 1. 统计要转移的素材数量
+        this.db.get('SELECT COUNT(*) as count FROM materials WHERE user_id = ?', [userId], (err, row) => {
+          if (err) { reject(err); return; }
+          const count = row ? row.count : 0;
+
+          // 2. 转移素材给目标用户
+          this.db.run('UPDATE materials SET user_id = ? WHERE user_id = ?', [targetUserId, userId], (err) => {
+            if (err) { reject(err); return; }
+
+            // 3. 删除用户
+            this.db.run('DELETE FROM users WHERE id = ?', [userId], function(err) {
+              if (err) reject(err);
+              else resolve({ deleted: this.changes > 0, transferredMaterials: count });
+            });
+          });
+        });
+      });
     });
   }
 

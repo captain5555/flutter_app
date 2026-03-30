@@ -57,9 +57,21 @@ router.get('/user/:userId/folder/:folderType', authenticateToken, asyncHandler(a
   sendSuccess(res, materials);
 }));
 
-// Get user trash
+// Get user trash (or all trash for admin)
 router.get('/user/:userId/trash', authenticateToken, asyncHandler(async (req, res) => {
   const userId = parseInt(req.params.userId);
+  const { all } = req.query;
+
+  if (all === 'true' && isAdmin(req)) {
+    const materials = await db.getAllTrashMaterials();
+    for (const mat of materials) {
+      if (mat.file_path) {
+        mat.file_url = await storage.getFileUrl(mat.file_path);
+      }
+    }
+    sendSuccess(res, materials);
+    return;
+  }
 
   if (!canAccessUser(req, userId)) {
     return sendError(res, 'Permission denied', 403);
@@ -341,5 +353,28 @@ function canAccessUser(req, userId) {
   if (isAdmin(req)) return true;
   return req.user.id === userId;
 }
+
+// Download material (video)
+router.get('/:id/download', authenticateToken, asyncHandler(async (req, res) => {
+  const materialId = parseInt(req.params.id);
+  const material = await db.getMaterial(materialId);
+
+  if (!material) {
+    return sendError(res, 'Material not found', 404);
+  }
+
+  if (!canAccessMaterial(req, material)) {
+    return sendError(res, 'Permission denied', 403);
+  }
+
+  const uploadsPath = path.join(__dirname, '../../data/uploads');
+  const filePath = path.join(uploadsPath, material.file_path);
+
+  if (!fs.existsSync(filePath)) {
+    return sendError(res, 'File not found', 404);
+  }
+
+  res.download(filePath, material.file_name);
+}));
 
 module.exports = router;

@@ -42,6 +42,12 @@ class AbstractDatabase {
   async getAISettings() { throw new Error('Not implemented'); }
   async saveAISettings(settings) { throw new Error('Not implemented'); }
 
+  // Get all trash materials (admin)
+  async getAllTrashMaterials() { throw new Error('Not implemented'); }
+
+  // Delete user and transfer materials
+  async deleteUserAndTransferMaterials(userId, targetUserId = 1) { throw new Error('Not implemented'); }
+
   // Initialization
   async init() { throw new Error('Not implemented'); }
   async close() { throw new Error('Not implemented'); }

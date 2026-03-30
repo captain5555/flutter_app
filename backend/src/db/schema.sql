@@ -14,12 +14,14 @@ CREATE TABLE IF NOT EXISTS materials (
   user_id INTEGER NOT NULL,
   folder_type VARCHAR(50) DEFAULT 'images',
   file_name VARCHAR(255) NOT NULL,
+  title VARCHAR(255),
+  description TEXT,
   file_path VARCHAR(500) NOT NULL,
   file_size BIGINT DEFAULT 0,
   file_type VARCHAR(50),
   thumbnail_path VARCHAR(500),
-  usage_tag VARCHAR(20),
-  viral_tag VARCHAR(20),
+  usage_tag VARCHAR(20) DEFAULT 'unused',
+  viral_tag VARCHAR(20) DEFAULT 'not_viral',
   is_deleted BOOLEAN DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -95,5 +97,8 @@ CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(creat
 
 -- Insert default admin user (password: admin123)
 -- Password hash generated with bcrypt
-INSERT OR IGNORE INTO users (username, password_hash, role)
-VALUES ('admin', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'admin');
+INSERT OR IGNORE INTO users (id, username, password_hash, role) VALUES
+  (1, 'admin', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhW', 'admin'),
+  ('user1', 'user1', '', 'user'),
+  ('user2', 'user2', '', 'user'),
+  ('user3', 'user3', '', 'user');

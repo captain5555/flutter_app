@@ -80,4 +80,45 @@ router.get('/me', authenticateToken, asyncHandler(async (req, res) => {
   sendSuccess(res, req.user);
 }));
 
+// Simplified login (V2 compatibility - no password)
+router.post('/login-simple', asyncHandler(async (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return sendError(res, 'Username is required');
+  }
+
+  const user = await db.getUserByUsername(username);
+  if (!user) {
+    return sendError(res, 'User not found', 401);
+  }
+
+  // Generate token
+  const jwt = require('jsonwebtoken');
+  const config = require('../config');
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    config.jwtSecret,
+    { expiresIn: config.jwtExpiresIn }
+  );
+
+  await logOperation(
+    { id: user.id },
+    'login',
+    'user',
+    user.id,
+    null,
+    getClientIp(req)
+  );
+
+  sendSuccess(res, {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role
+    }
+  });
+}));
+
 module.exports = router;
