@@ -481,6 +481,40 @@ class SQLiteDatabase extends AbstractDatabase {
       );
     });
   }
+
+  // AI Settings operations
+  async getAISettings() {
+    return new Promise((resolve, reject) => {
+      this.db.get('SELECT * FROM ai_settings WHERE id = ?', ['global'], (err, row) => {
+        if (err) reject(err);
+        else resolve(row || {
+          api_url: '',
+          api_key: '',
+          model: '',
+          title_prompt: '',
+          description_prompt: '',
+          safety_rules: '',
+          replacement_words: ''
+        });
+      });
+    });
+  }
+
+  async saveAISettings(settings) {
+    return new Promise((resolve, reject) => {
+      const { api_url, api_key, model, title_prompt, description_prompt, safety_rules, replacement_words } = settings;
+      this.db.run(
+        `INSERT OR REPLACE INTO ai_settings
+         (id, api_url, api_key, model, title_prompt, description_prompt, safety_rules, replacement_words, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        ['global', api_url || '', api_key || '', model || '', title_prompt || '', description_prompt || '', safety_rules || '', replacement_words || ''],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ success: true });
+        }
+      );
+    });
+  }
 }
 
 module.exports = new SQLiteDatabase();

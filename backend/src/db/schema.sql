@@ -52,6 +52,41 @@ CREATE TABLE IF NOT EXISTS operation_logs (
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- AI settings table
+CREATE TABLE IF NOT EXISTS ai_settings (
+  id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
+  api_url TEXT,
+  api_key TEXT,
+  model TEXT,
+  title_prompt TEXT,
+  description_prompt TEXT,
+  safety_rules TEXT,
+  replacement_words TEXT,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default AI settings
+INSERT OR IGNORE INTO ai_settings (id, api_url, api_key, model, title_prompt, description_prompt, safety_rules, replacement_words) VALUES (
+  'global',
+  '',
+  '',
+  '',
+  '你是一个短视频标题专家。请根据这张图片内容，生成一个吸引人的短视频标题。
+要求：
+- 15-20个字
+- 有吸引力，能引起好奇心
+- 适合短视频平台
+- 输出只需标题，不需要其他内容',
+  '你是一个疗愈文案专家。请根据这张图片内容，生成一段疗愈文案。
+要求：
+- 80-120个字
+- 温馨治愈，能引起共鸣
+- 适合短视频配文
+- 输出只需文案，不需要其他内容',
+  '',
+  ''
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_materials_user_id ON materials(user_id);
 CREATE INDEX IF NOT EXISTS idx_materials_is_deleted ON materials(is_deleted);

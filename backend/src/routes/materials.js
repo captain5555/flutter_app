@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const db = require('../config/database');
 const storage = require('../config/storage');
 const { authenticateToken } = require('../middleware/auth');
@@ -11,8 +12,28 @@ const { logOperation } = require('../middleware/logger');
 
 const router = express.Router();
 
-// Configure multer for memory storage
-const upload = multer({ storage: multer.memoryStorage() });
+// Configure multer for disk storage (avoid memory issues)
+const tempDir = path.join(__dirname, '../../data/temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+const storageEngine = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, tempDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storageEngine,
+  limits: {
+    fileSize: 500 * 1024 * 1024 // 500MB max
+  }
+});
 
 // Get user materials
 router.get('/user/:userId/folder/:folderType', authenticateToken, asyncHandler(async (req, res) => {
@@ -83,38 +104,58 @@ router.post('/upload', authenticateToken, upload.single('file'), asyncHandler(as
 
   const fileValidation = validateFile(req.file, folderType);
   if (!fileValidation.valid) {
+    // Clean up temp file
+    try {
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    } catch (e) {
+      console.error('Cleanup error:', e);
+    }
     return sendError(res, fileValidation.message);
   }
 
-  const isImage = folderType === 'images';
+  const isImage = folderType === 'images' || folderType === 'image';
   const filename = generateUniqueFilename(req.file.originalname);
   const filePath = path.join(folderType, filename);
 
-  const uploadResult = await storage.uploadFile(req.file.buffer, filePath, {
-    generateThumbnail: true,
-    isImage
-  });
+  try {
+    const uploadResult = await storage.uploadFile(req.file.path, filePath, {
+      generateThumbnail: true,
+      isImage
+    });
 
-  const material = await db.createMaterial({
-    user_id: req.user.id,
-    folder_type: folderType,
-    file_name: req.file.originalname,
-    file_path: filePath,
-    file_size: req.file.size,
-    file_type: req.file.mimetype,
-    thumbnail_path: uploadResult.thumbnailPath
-  });
+    const material = await db.createMaterial({
+      user_id: req.user.id,
+      folder_type: folderType,
+      file_name: req.file.originalname,
+      file_path: filePath,
+      file_size: req.file.size,
+      file_type: req.file.mimetype,
+      thumbnail_path: uploadResult.thumbnailPath
+    });
 
-  await logOperation(
-    req.user,
-    'upload_material',
-    'material',
-    material.id,
-    req.file.originalname,
-    getClientIp(req)
-  );
+    await logOperation(
+      req.user,
+      'upload_material',
+      'material',
+      material.id,
+      req.file.originalname,
+      getClientIp(req)
+    );
 
-  sendSuccess(res, material);
+    sendSuccess(res, material);
+  } catch (err) {
+    // Clean up temp file on error
+    try {
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    } catch (e) {
+      console.error('Cleanup error:', e);
+    }
+    throw err;
+  }
 }));
 
 // Update material

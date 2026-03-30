@@ -19,7 +19,7 @@ class LocalStorage extends AbstractStorage {
     });
   }
 
-  async uploadFile(fileBuffer, filePath, options = {}) {
+  async uploadFile(fileInput, filePath, options = {}) {
     const fullPath = path.join(this.basePath, filePath);
     const dir = path.dirname(fullPath);
 
@@ -27,7 +27,21 @@ class LocalStorage extends AbstractStorage {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(fullPath, fileBuffer);
+    let fileBuffer;
+    let fileSize;
+
+    // 支持 Buffer 或磁盘文件路径两种输入
+    if (typeof fileInput === 'string') {
+      // 从临时磁盘文件读取
+      fileBuffer = fs.readFileSync(fileInput);
+      fileSize = fs.statSync(fileInput).size;
+      fs.renameSync(fileInput, fullPath);
+    } else {
+      // 直接使用 Buffer
+      fileBuffer = fileInput;
+      fileSize = fileBuffer.length;
+      fs.writeFileSync(fullPath, fileBuffer);
+    }
 
     // Generate thumbnail for images
     let thumbnailPath = null;
@@ -38,7 +52,7 @@ class LocalStorage extends AbstractStorage {
     return {
       path: filePath,
       thumbnailPath,
-      size: fileBuffer.length
+      size: fileSize
     };
   }
 

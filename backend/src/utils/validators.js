@@ -25,10 +25,10 @@ function validateFile(file, folderType) {
   const limits = config.upload.maxFileSize;
   const allowedTypes = config.upload.allowedTypes[folderType] || [];
 
-  if (folderType === 'image' && file.size > limits.image) {
+  if ((folderType === 'image' || folderType === 'images') && file.size > limits.image) {
     return { valid: false, message: 'Image file too large (max 50MB)' };
   }
-  if (folderType === 'video' && file.size > limits.video) {
+  if ((folderType === 'video' || folderType === 'videos') && file.size > limits.video) {
     return { valid: false, message: 'Video file too large (max 500MB)' };
   }
 

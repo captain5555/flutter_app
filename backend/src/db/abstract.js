@@ -38,6 +38,10 @@ class AbstractDatabase {
   async getAllMaterials(filters = {}) { throw new Error('Not implemented'); }
   async getStorageStats() { throw new Error('Not implemented'); }
 
+  // AI Settings
+  async getAISettings() { throw new Error('Not implemented'); }
+  async saveAISettings(settings) { throw new Error('Not implemented'); }
+
   // Initialization
   async init() { throw new Error('Not implemented'); }
   async close() { throw new Error('Not implemented'); }

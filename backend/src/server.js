@@ -29,6 +29,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/materials', require('./routes/materials'));
 app.use('/api/folders', require('./routes/folders'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/ai', require('./routes/ai'));
 app.use('/', require('./routes/system'));
 
 // Error handler
