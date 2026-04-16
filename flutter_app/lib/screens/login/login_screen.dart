@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/auth_provider.dart';
-import '../../../constants/theme_constants.dart';
-import '../../home/home_screen.dart';
+import '../../providers/auth_provider.dart';
+import '../../constants/theme_constants.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -114,26 +114,31 @@ class _LoginScreenState extends State<LoginScreen> {
                       placeholder: '密码',
                       obscureText: _obscurePassword,
                       prefix: const Icon(CupertinoIcons.lock),
-                      suffix: CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        child: Icon(
-                          _obscurePassword
-                              ? CupertinoIcons.eye_slash
-                              : CupertinoIcons.eye,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
                       validator: (value) {
                         if (value?.trim().isEmpty ?? true) {
                           return '请输入密码';
                         }
                         return null;
                       },
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          child: Icon(
+                            _obscurePassword
+                                ? CupertinoIcons.eye_slash
+                                : CupertinoIcons.eye,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                     const SizedBox(height: ThemeConstants.spacingXl),
                     CupertinoButton.filled(

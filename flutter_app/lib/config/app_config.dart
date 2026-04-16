@@ -1,7 +1,16 @@
-class AppConfig {
-  static String baseUrl = 'http://localhost:3000';
+import '../utils/token_storage.dart';
 
-  static void setBaseUrl(String url) {
-    baseUrl = url;
+class AppConfig {
+  static const String defaultBaseUrl = 'http://localhost:3000';
+  static const String _baseUrlKey = 'base_url';
+
+  static Future<String> getBaseUrl() async {
+    final box = TokenStorage.box;
+    return box.get(_baseUrlKey, defaultValue: defaultBaseUrl);
+  }
+
+  static Future<void> saveBaseUrl(String url) async {
+    final box = TokenStorage.box;
+    await box.put(_baseUrlKey, url);
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/auth_provider.dart';
-import '../../../providers/material_provider.dart';
-import '../../../providers/theme_provider.dart';
-import '../../../constants/theme_constants.dart';
-import '../../../widgets/material_card.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/material_provider.dart';
+import '../../constants/theme_constants.dart';
+import '../../widgets/material_card.dart';
 import '../login/login_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -27,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final materialProvider = Provider.of<MaterialProvider>(context, listen: false);
 
@@ -92,7 +92,6 @@ class _MaterialsTab extends StatefulWidget {
 }
 
 class _MaterialsTabState extends State<_MaterialsTab> {
-  final List<String> _folders = ['images', 'videos'];
   final Set<int> _selectedIds = {};
   bool _isSelectionMode = false;
 
@@ -192,9 +191,9 @@ class _MaterialsTabState extends State<_MaterialsTab> {
               ),
               child: CupertinoSlidingSegmentedControl<String>(
                 groupValue: materialProvider.currentFolder,
-                children: {
-                  for (final folder in _folders)
-                    folder: Text(folder == 'images' ? '图片' : '视频'),
+                children: const {
+                  'images': Text('图片'),
+                  'videos': Text('视频'),
                 },
                 onValueChanged: (value) {
                   if (value != null) {

@@ -1,9 +1,9 @@
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class TokenStorage {
   static const String _boxName = 'app_box';
   static const String _keyToken = 'auth_token';
+  static const String _keyRefreshToken = 'refresh_token';
   static const String _keyUserId = 'user_id';
   static const String _keyUsername = 'username';
   static const String _keyUserRole = 'user_role';
@@ -11,6 +11,8 @@ class TokenStorage {
   static const String _keyThemeMode = 'theme_mode';
 
   static Box? _box;
+
+  static Box get box => _box!;
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -23,6 +25,19 @@ class TokenStorage {
 
   static String? getToken() {
     return _box?.get(_keyToken) as String?;
+  }
+
+  static Future<void> saveRefreshToken(String token) async {
+    await _box?.put(_keyRefreshToken, token);
+  }
+
+  static String? getRefreshToken() {
+    return _box?.get(_keyRefreshToken) as String?;
+  }
+
+  static Future<void> clearTokens() async {
+    await _box?.delete(_keyToken);
+    await _box?.delete(_keyRefreshToken);
   }
 
   static Future<void> saveUser(int id, String username, String role) async {
@@ -61,6 +76,7 @@ class TokenStorage {
 
   static Future<void> clearAuth() async {
     await _box?.delete(_keyToken);
+    await _box?.delete(_keyRefreshToken);
     await _box?.delete(_keyUserId);
     await _box?.delete(_keyUsername);
     await _box?.delete(_keyUserRole);

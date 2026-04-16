@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import '../../../providers/theme_provider.dart';
-import '../../../providers/settings_provider.dart';
-import '../../../providers/auth_provider.dart';
-import '../../../constants/theme_constants.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../constants/theme_constants.dart';
 import '../login/login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -18,7 +18,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+      if (mounted) {
+        Provider.of<SettingsProvider>(context, listen: false).loadSettings();
+      }
     });
   }
 
@@ -134,9 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             // Info Section
-            const CupertinoListSection.insetGrouped(
-              header: Text('关于'),
-              children: [
+            CupertinoListSection.insetGrouped(
+              header: const Text('关于'),
+              children: const [
                 CupertinoListTile(
                   title: Text('版本'),
                   subtitle: Text('1.0.0'),

@@ -9,7 +9,6 @@ class ApiService {
   ApiService._internal();
 
   late final Dio _dio;
-  final TokenStorage _tokenStorage = TokenStorage();
   bool _isInitialized = false;
 
   Future<void> initialize() async {
@@ -28,7 +27,7 @@ class ApiService {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _tokenStorage.getToken();
+        final token = TokenStorage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -42,7 +41,7 @@ class ApiService {
           final refreshed = await _refreshToken();
           if (refreshed) {
             final opts = error.response!.requestOptions;
-            final token = await _tokenStorage.getToken();
+            final token = TokenStorage.getToken();
             opts.headers['Authorization'] = 'Bearer $token';
             try {
               final response = await _dio.fetch(opts);
@@ -61,7 +60,7 @@ class ApiService {
 
   Future<bool> _refreshToken() async {
     try {
-      final refreshToken = await _tokenStorage.getRefreshToken();
+      final refreshToken = TokenStorage.getRefreshToken();
       if (refreshToken == null) return false;
 
       final response = await _dio.post(
@@ -70,15 +69,15 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        await _tokenStorage.saveToken(response.data['token']);
+        await TokenStorage.saveToken(response.data['token']);
         if (response.data['refreshToken'] != null) {
-          await _tokenStorage.saveRefreshToken(response.data['refreshToken']);
+          await TokenStorage.saveRefreshToken(response.data['refreshToken']);
         }
         return true;
       }
       return false;
     } catch (e) {
-      await _tokenStorage.clearTokens();
+      await TokenStorage.clearTokens();
       return false;
     }
   }

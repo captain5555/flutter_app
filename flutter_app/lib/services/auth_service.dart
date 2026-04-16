@@ -5,7 +5,6 @@ import 'api_service.dart';
 
 class AuthService {
   final ApiService _apiService = ApiService();
-  final TokenStorage _tokenStorage = TokenStorage();
 
   Future<User> login(String username, String password) async {
     final response = await _apiService.dio.post(
@@ -19,9 +18,9 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = response.data;
 
-      await _tokenStorage.saveToken(data['token']);
+      await TokenStorage.saveToken(data['token']);
       if (data['refreshToken'] != null) {
-        await _tokenStorage.saveRefreshToken(data['refreshToken']);
+        await TokenStorage.saveRefreshToken(data['refreshToken']);
       }
 
       return User.fromJson(data['user']);
@@ -49,12 +48,12 @@ class AuthService {
     } catch (e) {
       // Ignore logout errors
     } finally {
-      await _tokenStorage.clearTokens();
+      await TokenStorage.clearTokens();
     }
   }
 
   Future<bool> isAuthenticated() async {
-    final token = await _tokenStorage.getToken();
+    final token = TokenStorage.getToken();
     return token != null;
   }
 }
