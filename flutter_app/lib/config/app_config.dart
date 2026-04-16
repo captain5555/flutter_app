@@ -1,7 +1,7 @@
 import '../utils/token_storage.dart';
 
 class AppConfig {
-  static const String defaultBaseUrl = 'http://localhost:3000';
+  static const String defaultBaseUrl = 'http://47.103.151.220:3001';
   static const String _baseUrlKey = 'base_url';
 
   static Future<String> getBaseUrl() async {
