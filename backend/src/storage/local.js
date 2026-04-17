@@ -33,8 +33,11 @@ class LocalStorage extends AbstractStorage {
     // 支持 Buffer 或磁盘文件路径两种输入
     if (typeof fileInput === 'string') {
       // 从临时磁盘文件读取
-      fileBuffer = fs.readFileSync(fileInput);
       fileSize = fs.statSync(fileInput).size;
+      // 只有需要生成缩略图时才读入内存，避免大文件（如视频）OOM
+      if (options.generateThumbnail && options.isImage) {
+        fileBuffer = fs.readFileSync(fileInput);
+      }
       fs.renameSync(fileInput, fullPath);
     } else {
       // 直接使用 Buffer

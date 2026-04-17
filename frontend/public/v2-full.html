@@ -1,0 +1,3150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAS Material Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.1);
+            --green: #34C759;
+            --green-light: rgba(52, 199, 89, 0.15);
+            --orange: #FF9500;
+            --orange-light: rgba(255, 149, 0, 0.15);
+            --red: #FF3B30;
+            --red-light: rgba(255, 59, 48, 0.15);
+            --blue: #007AFF;
+            --blue-light: rgba(0, 122, 255, 0.15);
+            --bg: #F5F5F7;
+            --card-bg: #FFFFFF;
+            --sidebar-bg: #EBEBED;
+            --text: #1D1D1F;
+            --text-secondary: #86868B;
+            --border: #D2D2D7;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --card-bg: #1C1C1E;
+                --sidebar-bg: #121214;
+                --text: #FFFFFF;
+                --text-secondary: #98989D;
+                --border: #38383A;
+            }
+        }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-icon {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .login-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Hamburger Menu Button */
+        .hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            font-size: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-close-btn {
+            display: none;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        .sidebar-overlay.visible {
+            display: block;
+        }
+
+        /* Main App with Sidebar */
+        .app-layout {
+            display: flex;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-section {
+            padding: 12px 0;
+        }
+
+        .sidebar-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 16px;
+        }
+
+        .user-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .user-item:hover {
+            background: var(--card-bg);
+        }
+
+        .user-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .folder-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .folder-item:hover {
+            background: var(--card-bg);
+        }
+
+        .folder-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .folder-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .folder-name {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .folder-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .breadcrumb {
+            font-size: 15px;
+        }
+
+        .breadcrumb-current {
+            font-weight: 600;
+        }
+
+        .ai-nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .ai-nav-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .ai-nav-item.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .toggle-select-btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-select-btn:hover {
+            background: var(--border);
+        }
+
+        .toggle-select-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Batch Actions Bar */
+        .batch-actions-bar {
+            padding: 12px 20px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .batch-actions-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .batch-actions-right {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .select-all-btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn:hover {
+            background: var(--border);
+        }
+
+        .selected-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .batch-btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .batch-btn:hover {
+            opacity: 0.9;
+        }
+
+        .batch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .batch-btn-danger {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        .batch-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .batch-btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        /* Material Grid */
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .material-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            width: 100%;
+        }
+
+        .material-card {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .material-card:hover {
+            transform: scale(1.02);
+        }
+
+        .material-card.selected {
+            box-shadow: 0 0 0 2px var(--primary);
+            border-radius: 12px;
+        }
+
+        .select-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .material-card.selected .select-checkbox {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .card-download-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+
+        .material-card:hover .card-download-btn {
+            opacity: 1;
+        }
+
+        .card-download-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .material-thumbnail {
+            aspect-ratio: 16 / 10;
+            width: 100%;
+            max-width: 100%;
+            background: var(--card-bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .material-thumbnail img,
+        .material-thumbnail video,
+        .material-thumbnail .video-thumbnail {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .material-thumbnail svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-secondary);
+        }
+
+        .material-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 36px;
+        }
+
+        .material-info {
+            flex-grow: 1;
+            min-height: 70px;
+        }
+
+        .material-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .tag-usage-unused {
+            background: var(--orange-light);
+            color: var(--orange);
+        }
+
+        .tag-usage-used {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .tag-viral-not {
+            background: var(--blue-light);
+            color: var(--blue);
+        }
+
+        .tag-viral-yes {
+            background: var(--red-light);
+            color: var(--red);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Upload Progress Modal */
+        .upload-progress-modal {
+            max-width: 450px;
+        }
+
+        .upload-progress-info {
+            margin-bottom: 16px;
+        }
+
+        .upload-progress-file {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+
+        .upload-progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .upload-progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 6px;
+            transition: width 0.2s ease;
+        }
+
+        .upload-progress-bar.complete {
+            background: var(--green);
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .copy-user-modal {
+            max-width: 400px;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text-secondary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .detail-thumbnail {
+            aspect-ratio: 1;
+            background: var(--bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .detail-thumbnail svg {
+            width: 80px;
+            height: 80px;
+            color: var(--text-secondary);
+        }
+
+        .detail-group {
+            margin-bottom: 20px;
+        }
+
+        .detail-group-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .copy-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .copy-input-wrapper {
+            width: 100%;
+        }
+
+        .detail-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+        }
+
+        .detail-input:focus {
+            border-color: var(--primary);
+        }
+
+        .detail-input[type="text"] {
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        .detail-input.textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .detail-input.auto-resize {
+            resize: none;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        .detail-actions-row {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .copy-btn:hover {
+            background: var(--border);
+        }
+
+        .copy-btn.copied {
+            background: var(--green-light);
+            color: var(--green);
+            border-color: var(--green);
+        }
+
+        .ai-generate-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .ai-generate-btn:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: var(--bg);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .segment-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .segment-btn.active {
+            background: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .file-info p {
+            margin-bottom: 8px;
+        }
+
+        .ai-generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .translate-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--orange-light);
+            color: var(--orange);
+            border: 1px solid var(--orange);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .translate-btn:hover {
+            background: var(--orange);
+            color: white;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Upload button - global style */
+        .upload-btn {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            padding: 8px 14px !important;
+            min-height: auto !important;
+            border-radius: 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .upload-btn svg {
+            width: 16px !important;
+            height: 16px !important;
+        }
+
+        /* Copy User List */
+        .copy-user-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .copy-user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .copy-user-item:hover {
+            background: var(--bg);
+        }
+
+        .copy-user-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .copy-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .copy-user-info {
+            flex: 1;
+        }
+
+        .copy-user-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .copy-user-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .copy-folder-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .material-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+
+            .batch-actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .batch-actions-left,
+            .batch-actions-right {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hamburger-btn {
+                display: flex;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                z-index: 999;
+                transition: left 0.3s ease;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-close-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .main-content {
+                margin-left: 0;
+                overflow-x: hidden;
+                width: 100%;
+            }
+
+            .content-header {
+                padding-left: 70px;
+            }
+
+            .user-item, .folder-item {
+                min-height: 48px;
+                padding: 12px 16px;
+            }
+
+            .user-name, .folder-name {
+                font-size: 16px;
+            }
+
+            .material-name {
+                font-size: 15px;
+            }
+
+            .btn, .batch-btn, .login-btn {
+                min-height: 44px;
+                font-size: 15px;
+                padding: 10px 14px;
+            }
+
+            .detail-input {
+                font-size: 16px; /* 防止 iOS 缩放 */
+            }
+
+            .auto-resize {
+                max-height: none;
+            }
+
+            .material-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                align-items: stretch;
+                justify-items: stretch;
+                width: 100%;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            .material-card {
+                height: 100%;
+                background: var(--card-bg);
+                border-radius: 10px;
+                padding: 6px;
+                width: 100%;
+                box-sizing: border-box;
+                min-width: 0;
+            }
+
+            .material-thumbnail {
+                border-radius: 6px;
+                margin-bottom: 6px;
+            }
+
+            .material-name {
+                font-size: 12px;
+                min-height: 30px;
+                line-height: 1.2;
+            }
+
+            .material-tags {
+                gap: 4px;
+            }
+
+            .tag {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+
+            .material-info {
+                min-height: 55px;
+            }
+
+            .batch-actions-bar {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .batch-actions-right {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .batch-btn {
+                width: 100%;
+                justify-content: center;
+                font-size: 13px;
+                padding: 8px 10px;
+                min-height: 40px;
+            }
+
+            .upload-btn {
+                font-size: 14px;
+                font-weight: 600;
+                padding: 8px 14px;
+                min-height: auto;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .upload-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            body.sidebar-open {
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .material-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .sidebar {
+                width: 220px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const API_BASE = '/api';
+
+        const i18n = {
+            'NAS 素材管理': 'NAS Material Manager',
+            '用户名': 'Username',
+            '选择用户': 'Select User',
+            '请输入用户名（admin 为管理员）': 'Enter username (admin for administrator)',
+            '请选择用户': 'Please select a user',
+            '登录': 'Login',
+            '当前用户': 'Current User',
+            '管理员': 'Admin',
+            '普通用户': 'User',
+            '退出登录': 'Logout',
+            '用户列表': 'Users',
+            '我的账户': 'My Account',
+            '存储空间': 'Storage',
+            '图片': 'Images',
+            '视频': 'Videos',
+            '垃圾箱': 'Trash',
+            '系统管理': 'Admin',
+            '用户管理': 'User Management',
+            '上传': 'Upload',
+            '上传图片': 'Upload Images',
+            '上传视频': 'Upload Videos',
+            '上传中': 'Uploading',
+            '文件': 'File',
+            '选择': 'Select',
+            '取消选择': 'Cancel',
+            '全选': 'Select All',
+            '取消全选': 'Deselect All',
+            '移到垃圾箱': 'Move to Trash',
+            '恢复': 'Restore',
+            '永久删除': 'Delete Permanently',
+            '复制给用户': 'Copy to User',
+            '移动给用户': 'Move to User',
+            '素材详情': 'Material Details',
+            '标题': 'Title',
+            '描述': 'Description',
+            '复制': 'Copy',
+            '已复制': 'Copied',
+            '基本信息': 'Basic Info',
+            '使用状态': 'Usage Status',
+            '未使用': 'Unused',
+            '使用过': 'Used',
+            '爆款标签': 'Viral Tag',
+            '未爆': 'Not Viral',
+            '爆款': 'Viral',
+            '文件名': 'Filename',
+            '下载视频': 'Download Video',
+            '下载图片': 'Download Image',
+            '取消': 'Cancel',
+            '保存': 'Save',
+            '复制给其他用户': 'Copy to User',
+            '移动给其他用户': 'Move to User',
+            '复制到「图片」文件夹': 'Copy to "Images" folder',
+            '复制到「视频」文件夹': 'Copy to "Videos" folder',
+            '移动到「图片」文件夹': 'Move to "Images" folder',
+            '移动到「视频」文件夹': 'Move to "Videos" folder',
+            '创建用户': 'Create User',
+            '请输入用户名': 'Enter username',
+            '创建': 'Create',
+            '确认删除': 'Confirm Delete',
+            '删除': 'Delete',
+            '暂无素材': 'No materials',
+            '该素材是示例数据，暂无法下载': 'This is sample data, download not available',
+            '成功上传 X 个文件！': 'Successfully uploaded {X} files!',
+            '上传失败，请检查控制台日志': 'Upload failed, please check console logs',
+            '已成功复制 X 个素材！': 'Successfully copied {X} materials!',
+            '复制失败: X': 'Copy failed: {X}',
+            '已成功移动 X 个素材！': 'Successfully moved {X} materials!',
+            '移动失败: X': 'Move failed: {X}',
+            '确定要将 X 个素材移到垃圾箱吗？': 'Are you sure you want to move {X} materials to trash?',
+            '确定要恢复 X 个素材吗？': 'Are you sure you want to restore {X} materials?',
+            '确定要永久删除 X 个素材吗？此操作不可恢复！': 'Are you sure you want to permanently delete {X} materials? This action cannot be undone!',
+            '删除失败': 'Delete failed',
+            '用户不存在': 'User not found',
+            'items selected': 'items selected',
+            '已选择 X 项': '{X} items selected',
+            '已删除': 'Deleted',
+            '用户ID': 'User ID',
+            '用户名': 'Username',
+            '角色': 'Role',
+            '操作': 'Actions',
+            '下载提示': 'Download Tip',
+            '下载提示_iOS': 'Download Tip:\n\n1. Video will open in new page\n2. Long press the video\n3. Select "Save to Photos"\n4. Video will be saved to your album',
+            '下载提示_iOS_zh': '下载提示：\n\n1. 视频将在新页面打开\n2. 长按视频\n3. 选择「存储到「照片」」\n4. 视频将保存到相册',
+            '下载提示_Android': 'Download Tip:\n\n1. Video will start downloading\n2. Find it in "Files" or "Gallery" after download\n3. To save to album, use your file manager',
+            '下载提示_Android_zh': '下载提示：\n\n1. 视频将开始下载\n2. 下载完成后可在「文件」或「相册」中查看\n3. 如需保存到相册，请在文件管理器中操作',
+            '请先截取视频画面': 'Please capture a video frame first',
+            '生成失败: ': 'Generation failed: ',
+            '截图': 'Screenshot',
+            'AI生成标题': 'AI Generate Title',
+            'AI生成文案': 'AI Generate Description',
+            '已选择截图': 'Screenshot selected',
+            '点击生成标题': 'Click to generate title',
+            '点击生成文案': 'Click to generate description',
+            '上传超时，请检查文件大小或网络连接': 'Upload timeout, please check file size or network connection',
+            '上传失败 - ': 'Upload failed - ',
+            '未知错误': 'Unknown error',
+            '创建失败': 'Create failed',
+            'AI设置': 'AI Settings',
+            'API地址': 'API URL',
+            'API密钥': 'API Key',
+            '模型': 'Model',
+            '标题生成提示词': 'Title Generation Prompt',
+            '文案生成提示词': 'Description Generation Prompt',
+            '保存设置': 'Save Settings',
+            '设置已保存': 'Settings saved',
+            '仅管理员可见': 'Admin only'
+        };
+
+        function t(text) {
+            return i18n[text] || text;
+        }
+
+        function tFormat(text, variables) {
+            let result = i18n[text] || text;
+            for (const key in variables) {
+                result = result.replace(`{${key}}`, variables[key]);
+            }
+            return result;
+        }
+
+        const UsageTag = {
+            unused: { rawValue: 'unused', displayName: 'Unused', color: 'orange' },
+            used: { rawValue: 'used', displayName: 'Used', color: 'green' }
+        };
+
+        const ViralTag = {
+            notViral: { rawValue: 'not_viral', displayName: 'Not Viral', color: 'blue' },
+            viral: { rawValue: 'viral', displayName: 'Viral', color: 'red' }
+        };
+
+        const icons = {
+            folder: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8h-4l-2-2H10z"/></svg>',
+            photo: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>',
+            video: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>',
+            close: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+            copy: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7h-4l-2-2H10z"/></svg>',
+            check: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
+            trash: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>',
+            move: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/></svg>',
+            upload: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>',
+            download: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>'
+        };
+
+        let state = {
+            isLoggedIn: false,
+            currentUser: null,
+            currentUserRole: null,
+            currentFolder: 'videos',
+            isTrashView: false,
+            users: [],
+            materials: [],
+            selectedMaterial: null,
+            isSelectMode: false,
+            selectedMaterialIds: new Set(),
+            showBatchCopyModal: false,
+            showBatchMoveModal: false,
+            currentView: 'materials',
+            showCreateUserModal: false,
+            showDeleteUserModal: false,
+            userToDelete: null,
+            currentViewingUserId: null,
+            sidebarOpen: false,
+            currentScreenshot: null,
+            showAISettingsModal: false,
+            aiSettings: {
+                api_url: '',
+                api_key: '',
+                model: '',
+                title_prompt: '',
+                description_prompt: '',
+                safety_rules: '',
+                replacement_words: ''
+            },
+            isUploading: false,
+            uploadProgress: {
+                total: 0,
+                current: 0,
+                fileName: '',
+                percent: 0
+            }
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(str) {
+            if (!str) return '';
+            return str.replace(/"/g, '&quot;');
+        }
+
+        function escapeTextarea(str) {
+            if (!str) return '';
+            // Only escape </textarea> to prevent breaking the HTML structure
+            return str.replace(/<\/textarea>/gi, '&lt;/textarea&gt;');
+        }
+
+        async function apiRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                const data = await response.json();
+                return data;
+            } catch (err) {
+                console.error('API Error:', err);
+                return { error: err.message };
+            }
+        }
+
+        async function loadUsers() {
+            let url = `${API_BASE}/users`;
+            if (state.currentUser) {
+                url += `?current_user_id=${state.currentUser.id}&current_user_role=${state.currentUserRole}`;
+            }
+            const data = await apiRequest(url);
+            if (!data.error) {
+                state.users = data;
+            }
+        }
+
+        async function loadMaterials() {
+            if (!state.currentUser) return;
+            const userId = state.currentViewingUserId || state.currentUser.id;
+            console.log('Loading materials for user:', userId, 'folder:', state.currentFolder, 'trash:', state.isTrashView);
+
+            let url;
+            if (state.isTrashView) {
+                url = `${API_BASE}/materials/user/${userId}/trash?current_user_role=${state.currentUserRole}`;
+            } else {
+                url = `${API_BASE}/materials/user/${userId}/folder/${state.currentFolder}`;
+            }
+
+            const data = await apiRequest(url);
+            console.log('Materials loaded:', data);
+            if (!data.error) {
+                state.materials = data;
+            }
+        }
+
+        async function handleLogin(username) {
+            const data = await apiRequest(`${API_BASE}/users/login`, {
+                method: 'POST',
+                body: JSON.stringify({ username })
+            });
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            state.currentUser = data;
+            state.currentUserRole = data.role;
+            state.currentViewingUserId = data.id;
+            state.isLoggedIn = true;
+            state.isTrashView = false;
+            state.currentFolder = 'videos';
+            state.currentView = 'materials';
+
+            const loginData = {
+                currentUser: state.currentUser,
+                currentUserRole: state.currentUserRole,
+                currentViewingUserId: state.currentViewingUserId,
+                isLoggedIn: state.isLoggedIn
+            };
+            localStorage.setItem('nasMaterialManager_login', JSON.stringify(loginData));
+
+            await loadUsers();
+            await loadMaterials();
+            render();
+        }
+
+        function uploadFileWithProgress(file, targetUserId, index, totalFiles) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('folder_type', state.currentFolder);
+                formData.append('user_id', targetUserId);
+                formData.append('filename_utf8', btoa(unescape(encodeURIComponent(file.name))));
+
+                const xhr = new XMLHttpRequest();
+                const timeoutId = setTimeout(() => xhr.abort(), 10 * 60 * 1000);
+
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        state.uploadProgress = {
+                            total: totalFiles,
+                            current: index + 1,
+                            fileName: file.name,
+                            percent: percentComplete
+                        };
+                        render();
+                    }
+                });
+
+                xhr.addEventListener('load', () => {
+                    clearTimeout(timeoutId);
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (xhr.status >= 200 && xhr.status < 300 && !data.error) {
+                            resolve(data);
+                        } else {
+                            reject(new Error(data.error || `HTTP ${xhr.status}`));
+                        }
+                    } catch (e) {
+                        reject(new Error('Invalid response'));
+                    }
+                });
+
+                xhr.addEventListener('error', () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error('Network error'));
+                });
+
+                xhr.addEventListener('abort', () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error('Upload timeout'));
+                });
+
+                xhr.open('POST', `${API_BASE}/materials/upload`);
+                xhr.send(formData);
+            });
+        }
+
+        async function handleFileUpload(files) {
+            console.log('=== handleFileUpload called ===');
+            console.log('Files:', files);
+
+            const targetUserId = state.currentViewingUserId || state.currentUser.id;
+
+            state.isUploading = true;
+            state.uploadProgress = {
+                total: files.length,
+                current: 0,
+                fileName: '',
+                percent: 0
+            };
+            render();
+
+            let successCount = 0;
+            let failedFiles = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                console.log('----------------------------------------');
+                console.log('Processing file:', file.name);
+
+                try {
+                    const data = await uploadFileWithProgress(file, targetUserId, i, files.length);
+                    successCount++;
+                    console.log('✅ File uploaded successfully:', file.name);
+                } catch (e) {
+                    console.error('❌ Upload failed:', file.name, e);
+                    failedFiles.push({ name: file.name, error: e.message });
+                }
+            }
+
+            state.isUploading = false;
+            console.log('========================================');
+            console.log('Upload complete, successCount:', successCount);
+
+            if (successCount > 0) {
+                await loadMaterials();
+            }
+
+            render();
+
+            if (failedFiles.length > 0) {
+                const failedList = failedFiles.map(f => `- ${f.name}: ${f.error}`).join('\n');
+                alert(tFormat('成功上传 X 个文件！\n\n以下文件上传失败：\n{failedList}', {
+                    X: successCount,
+                    failedList: failedList
+                }));
+            } else if (successCount > 0) {
+                alert(tFormat('成功上传 X 个文件！', { X: successCount }));
+            } else if (files.length > 0) {
+                alert(t('上传失败，请检查控制台日志'));
+            }
+        }
+
+        async function handleSaveDetail() {
+            const m = state.selectedMaterial;
+            const title = document.getElementById('detailTitle').value;
+            const description = document.getElementById('detailDesc').value;
+            const usageTag = document.querySelector('.segment-btn[data-usage].active')?.dataset.usage || m.usage_tag;
+            const viralTag = document.querySelector('.segment-btn[data-viral].active')?.dataset.viral || m.viral_tag;
+
+            const data = await apiRequest(`${API_BASE}/materials/${m.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    title: title.trim() || null,
+                    description: description.trim() || null,
+                    usage_tag: usageTag,
+                    viral_tag: viralTag,
+                    current_user_id: state.currentUser?.id
+                })
+            });
+
+            if (!data.error) {
+                closeModal();
+                await loadMaterials();
+                render();
+            }
+        }
+
+        async function handleBatchTrash() {
+            if (state.selectedMaterialIds.size === 0) return;
+            if (!confirm(tFormat('确定要将 X 个素材移到垃圾箱吗？', { X: state.selectedMaterialIds.size }))) return;
+
+            const data = await apiRequest(`${API_BASE}/materials/batch/trash`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ids: Array.from(state.selectedMaterialIds),
+                    current_user_id: state.currentUser?.id,
+                    current_user_role: state.currentUserRole
+                })
+            });
+
+            if (!data.error) {
+                state.selectedMaterialIds.clear();
+                state.isSelectMode = false;
+                await loadMaterials();
+                render();
+            }
+        }
+
+        async function handleBatchRestore() {
+            if (state.selectedMaterialIds.size === 0) return;
+            if (!confirm(tFormat('确定要恢复 X 个素材吗？', { X: state.selectedMaterialIds.size }))) return;
+
+            const data = await apiRequest(`${API_BASE}/materials/batch/restore`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ids: Array.from(state.selectedMaterialIds),
+                    current_user_id: state.currentUser?.id
+                })
+            });
+
+            if (!data.error) {
+                state.selectedMaterialIds.clear();
+                state.isSelectMode = false;
+                await loadMaterials();
+                render();
+            }
+        }
+
+        async function handleBatchPermanentDelete() {
+            if (state.selectedMaterialIds.size === 0) return;
+            if (!confirm(tFormat('确定要永久删除 X 个素材吗？此操作不可恢复！', { X: state.selectedMaterialIds.size }))) return;
+
+            const data = await apiRequest(`${API_BASE}/materials/batch/permanent`, {
+                method: 'DELETE',
+                body: JSON.stringify({
+                    ids: Array.from(state.selectedMaterialIds),
+                    current_user_id: state.currentUser?.id
+                })
+            });
+
+            if (!data.error) {
+                state.selectedMaterialIds.clear();
+                state.isSelectMode = false;
+                await loadMaterials();
+                render();
+            } else {
+                alert(data.error || t('删除失败'));
+            }
+        }
+
+        async function handleBatchCopy(targetUserId) {
+            console.log('handleBatchCopy called with targetUserId:', targetUserId);
+            console.log('Selected ids:', Array.from(state.selectedMaterialIds));
+            const data = await apiRequest(`${API_BASE}/materials/batch/copy`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ids: Array.from(state.selectedMaterialIds),
+                    targetUserId,
+                    current_user_id: state.currentUser?.id
+                })
+            });
+            console.log('Batch copy response:', data);
+
+            if (!data.error) {
+                state.selectedMaterialIds.clear();
+                state.isSelectMode = false;
+                state.showBatchCopyModal = false;
+                alert(tFormat('已成功复制 X 个素材！', { X: data.copied }));
+                await loadMaterials();
+                render();
+            } else {
+                alert(tFormat('复制失败: X', { X: data.error || t('未知错误') }));
+            }
+        }
+
+        async function handleBatchMove(targetUserId) {
+            console.log('handleBatchMove called with targetUserId:', targetUserId);
+            console.log('Selected ids:', Array.from(state.selectedMaterialIds));
+            const data = await apiRequest(`${API_BASE}/materials/batch/move`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    ids: Array.from(state.selectedMaterialIds),
+                    targetUserId,
+                    current_user_id: state.currentUser?.id
+                })
+            });
+            console.log('Batch move response:', data);
+
+            if (!data.error) {
+                state.selectedMaterialIds.clear();
+                state.isSelectMode = false;
+                state.showBatchMoveModal = false;
+                alert(tFormat('已成功移动 X 个素材！', { X: data.moved }));
+                await loadMaterials();
+                render();
+            } else {
+                alert(tFormat('移动失败: X', { X: data.error || t('未知错误') }));
+            }
+        }
+
+        async function switchView(view) {
+            state.currentView = view;
+            if (view === 'ai-settings') {
+                await loadAISettings();
+            }
+            render();
+        }
+
+        function openCreateUserModal() {
+            state.showCreateUserModal = true;
+            render();
+        }
+
+        function closeCreateUserModal() {
+            state.showCreateUserModal = false;
+            render();
+        }
+
+        async function createUser() {
+            const nameInput = document.getElementById('newUserName');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, current_user_id: state.currentUser.id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadUsers();
+                    closeCreateUserModal();
+                } else {
+                    alert(data.error || t('创建失败'));
+                }
+            } catch (e) {
+                alert(t('创建失败') + ': ' + e.message);
+            }
+        }
+
+        function openDeleteUserModal(user) {
+            state.userToDelete = user;
+            state.showDeleteUserModal = true;
+            render();
+        }
+
+        function closeDeleteUserModal() {
+            state.userToDelete = null;
+            state.showDeleteUserModal = false;
+            render();
+        }
+
+        async function deleteUser() {
+            if (!state.userToDelete) return;
+
+            try {
+                const res = await fetch(`/api/users/${state.userToDelete.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_user_id: state.currentUser.id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadUsers();
+                    if (state.currentViewingUserId === state.userToDelete.id) {
+                        state.currentViewingUserId = state.currentUser.id;
+                        await loadMaterials();
+                    }
+                    closeDeleteUserModal();
+                } else {
+                    alert(data.error || t('删除失败'));
+                }
+            } catch (e) {
+                alert(t('删除失败') + ': ' + e.message);
+            }
+        }
+
+        function downloadMaterial(ossKey, filename) {
+            if (!ossKey) {
+                alert(t('该素材是示例数据，暂无法下载'));
+                return;
+            }
+
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isMobile) {
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isIOS) {
+                    alert(i18n['下载提示_iOS_zh'] || i18n['下载提示_iOS']);
+                    window.open(ossKey, '_blank');
+                } else {
+                    alert(i18n['下载提示_Android_zh'] || i18n['下载提示_Android']);
+                    const a = document.createElement('a');
+                    a.href = ossKey;
+                    a.download = filename || 'download';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            } else {
+                const a = document.createElement('a');
+                a.href = ossKey;
+                a.download = filename || 'download';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        function closeModal() {
+            state.selectedMaterial = null;
+            state.showBatchCopyModal = false;
+            state.showBatchMoveModal = false;
+            state.currentScreenshot = null;
+            render();
+        }
+
+        function toggleSelectAll() {
+            const currentMaterials = state.isTrashView
+                ? state.materials
+                : (state.currentFolder === 'images'
+                    ? state.materials.filter(m => m.folder_type === 'images')
+                    : state.materials.filter(m => m.folder_type === 'videos'));
+            const allSelected = state.selectedMaterialIds.size === currentMaterials.length;
+            if (allSelected) {
+                state.selectedMaterialIds.clear();
+            } else {
+                currentMaterials.forEach(m => state.selectedMaterialIds.add(m.id));
+            }
+            render();
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = state.isLoggedIn ? renderMain() : renderLogin();
+            attachEventListeners();
+        }
+
+        function renderLogin() {
+            return `
+                <div class="login-screen">
+                    <div class="login-card">
+                        <div class="login-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" style="width:80px;height:80px;color:var(--primary);">
+                                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8h-4l-2-2H10z"/>
+                            </svg>
+                        </div>
+                        <div class="login-title">${t('NAS 素材管理')}</div>
+                        <div class="form-group">
+                            <label>${t('选择用户')}</label>
+                            <select id="loginUserSelect">
+                                ${state.users.map(u => `
+                                    <option value="${escapeAttr(u.name)}">
+                                        ${escapeHtml(u.name)} (${u.role === 'admin' ? t('管理员') : t('普通用户')})
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <button class="login-btn" id="loginBtn">${t('登录')}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMain() {
+            const viewingUserId = state.currentViewingUserId || state.currentUser?.id;
+            const viewingUser = state.users.find(u => u.id === viewingUserId) || state.currentUser;
+            const videoCount = state.materials.filter(m => m.folder_type === 'videos' && !m.deleted_at).length;
+            const trashCount = state.materials.filter(m => m.deleted_at).length;
+            const currentMaterials = state.isTrashView
+                ? state.materials
+                : state.materials.filter(m => m.folder_type === 'videos');
+
+            const sidebarUsers = state.currentUserRole === 'admin'
+                ? state.users
+                : state.users.filter(u => u.id === state.currentUser?.id);
+
+            return `
+                <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+                <div class="sidebar-overlay ${state.sidebarOpen ? 'visible' : ''}" id="sidebarOverlay"></div>
+
+                <div class="app-layout">
+                    <aside class="sidebar ${state.sidebarOpen ? 'open' : ''}">
+                        <button class="sidebar-close-btn" id="sidebarCloseBtn">✕</button>
+                        <div class="sidebar-header">
+                            <div class="sidebar-title">
+                                ${icons.folder}
+                                ${t('NAS 素材管理')}
+                            </div>
+                            <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);">
+                                ${t('当前用户')}: <strong>${state.currentUser?.name || ''}</strong>
+                                ${state.currentUserRole === 'admin' ? `<span style="margin-left:8px;padding:2px 8px;background:var(--primary-light);color:var(--primary);border-radius:12px;font-size:11px;">${t('管理员')}</span>` : ''}
+                            </div>
+                            <button class="btn btn-secondary" id="logoutBtn" style="margin-top:12px;width:100%;padding:8px;font-size:13px;">${t('退出登录')}</button>
+                        </div>
+
+                        <div class="sidebar-section" style="display:flex;flex-direction:column;flex:0 0 auto;">
+                            <div class="sidebar-section-title">${state.currentUserRole === 'admin' ? t('用户列表') : t('我的账户')}</div>
+                            <div id="userListContainer" style="max-height:200px;overflow-y:auto;overflow-x:hidden;">
+                                ${sidebarUsers.map(u => `
+                                    <div class="user-item ${(state.currentViewingUserId || state.currentUser?.id) === u.id ? 'active' : ''}" data-user-id="${u.id}">
+                                        <div class="user-avatar">${u.name.charAt(0)}</div>
+                                        <span class="user-name">${u.name}</span>
+                                        ${u.role === 'admin' ? `<span style="font-size:11px;color:var(--primary);margin-left:auto;">${t('管理员')}</span>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        ${state.currentUser ? `
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">${t('存储空间')}</div>
+                            <div class="folder-item ${state.currentView === 'materials' && !state.isTrashView && state.currentFolder === 'videos' ? 'active' : ''}" data-folder="videos" data-trash="false">
+                                <span class="folder-icon">${icons.video}</span>
+                                <span class="folder-name">${t('视频')}</span>
+                                <span class="folder-count">${state.currentView === 'materials' && !state.isTrashView && state.currentFolder === 'videos' ? currentMaterials.length : videoCount}</span>
+                            </div>
+                            <div class="folder-item ${state.currentView === 'materials' && state.isTrashView ? 'active' : ''}" data-trash="true" style="color:var(--red);">
+                                <span class="folder-icon">🗑️</span>
+                                <span class="folder-name">${t('垃圾箱')}</span>
+                                <span class="folder-count">${state.currentView === 'materials' && state.isTrashView ? currentMaterials.length : trashCount}</span>
+                            </div>
+                        </div>
+                        ${state.currentUserRole === 'admin' ? `
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">${t('系统管理')}</div>
+                            <div class="folder-item ${state.currentView === 'users' ? 'active' : ''}" data-view="users">
+                                <span class="folder-icon">👥</span>
+                                <span class="folder-name">${t('用户管理')}</span>
+                            </div>
+                            <div class="folder-item ${state.currentView === 'ai-settings' ? 'active' : ''}" data-view="ai-settings">
+                                <span class="folder-icon">⚙️</span>
+                                <span class="folder-name">${t('AI设置')}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ` : ''}
+                    </aside>
+
+                    ${state.currentView === 'materials' ? `
+                    <main class="main-content">
+                        <header class="content-header">
+                            <div>
+                                <div class="breadcrumb">
+                                    <span>${(state.users.find(u => u.id === state.currentViewingUserId) || state.currentUser)?.name || ''}</span>
+                                    <span>/</span>
+                                    <span class="breadcrumb-current">${state.isTrashView ? t('垃圾箱') : t('视频')}</span>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:12px;align-items:center;">
+                                ${!state.isTrashView ? `
+                                <input type="file" id="fileInput" style="display:none;" accept="video/*" multiple>
+                                <button class="btn btn-primary upload-btn" id="uploadBtn">
+                                    ${icons.upload} ${t('上传视频')}
+                                </button>
+                                ` : ''}
+                                <button class="toggle-select-btn ${state.isSelectMode ? 'active' : ''}" id="toggleSelectMode">
+                                    ${state.isSelectMode ? t('取消选择') : t('选择')}
+                                </button>
+                            </div>
+                        </header>
+
+                        ${state.isSelectMode ? `
+                            <div class="batch-actions-bar">
+                                <div class="batch-actions-left">
+                                    <button class="select-all-btn" id="selectAllBtn">
+                                        ${state.selectedMaterialIds.size === currentMaterials.length ? t('取消全选') : t('全选')}
+                                    </button>
+                                    <span class="selected-count">${tFormat('已选择 X 项', { X: state.selectedMaterialIds.size })}</span>
+                                </div>
+                                <div class="batch-actions-right">
+                                    ${state.isTrashView ? `
+                                    <button class="batch-btn batch-btn-primary" id="batchRestoreBtn" ${state.selectedMaterialIds.size === 0 ? 'disabled' : ''}>
+                                        ↩️ ${t('恢复')}
+                                    </button>
+                                    ${state.currentUserRole === 'admin' ? `
+                                    <button class="batch-btn batch-btn-danger" id="batchPermanentDeleteBtn" ${state.selectedMaterialIds.size === 0 ? 'disabled' : ''}>
+                                        ${icons.trash} ${t('永久删除')}
+                                    </button>
+                                    ` : ''}
+                                    ` : `
+                                    <button class="batch-btn batch-btn-danger" id="batchTrashBtn" ${state.selectedMaterialIds.size === 0 ? 'disabled' : ''}>
+                                        🗑️ ${t('移到垃圾箱')}
+                                    </button>
+                                    <button class="batch-btn batch-btn-secondary" id="batchCopyBtn" ${state.selectedMaterialIds.size === 0 ? 'disabled' : ''}>
+                                        ${icons.copy} ${t('复制给用户')}
+                                    </button>
+                                    <button class="batch-btn batch-btn-secondary" id="batchMoveBtn" ${state.selectedMaterialIds.size === 0 ? 'disabled' : ''}>
+                                        ${icons.move} ${t('移动给用户')}
+                                    </button>
+                                    `}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="content-body">
+                            ${currentMaterials.length === 0 ? renderEmptyState() : renderMaterialGrid(currentMaterials)}
+                        </div>
+                    </main>
+                    ` : state.currentView === 'users' ? `
+                    <main class="main-content">
+                        <header class="content-header">
+                            <div>
+                                <div class="breadcrumb">
+                                    <span>${t('用户管理')}</span>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:12px;align-items:center;">
+                                <button class="btn btn-primary upload-btn" id="createUserBtn">
+                                    ${icons.upload} ${t('创建用户')}
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="content-body">
+                            <div style="padding:16px;">
+                                <table style="width:100%;border-collapse:collapse;">
+                                    <thead>
+                                        <tr style="border-bottom:1px solid var(--border);">
+                                            <th style="text-align:left;padding:12px;">${t('用户ID')}</th>
+                                            <th style="text-align:left;padding:12px;">${t('用户名')}</th>
+                                            <th style="text-align:left;padding:12px;">${t('角色')}</th>
+                                            <th style="text-align:right;padding:12px;">${t('操作')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${state.users.map(u => `
+                                            <tr style="border-bottom:1px solid var(--border);">
+                                                <td style="padding:12px;">${escapeHtml(u.id)}</td>
+                                                <td style="padding:12px;">${escapeHtml(u.name)}</td>
+                                                <td style="padding:12px;">
+                                                    <span style="padding:4px 8px;border-radius:6px;background:${u.role === 'admin' ? 'var(--orange-light)' : 'var(--blue-light)'};">
+                                                        ${u.role === 'admin' ? t('管理员') : t('普通用户')}
+                                                    </span>
+                                                </td>
+                                                <td style="padding:12px;text-align:right;">
+                                                    ${u.id !== state.currentUser.id && u.role !== 'admin' ? `
+                                                        <button class="btn btn-secondary" onclick='openDeleteUserModal(${JSON.stringify(u).replace(/'/g, "\\'")})' style="padding:6px 12px;">
+                                                            ${t('删除')}
+                                                        </button>
+                                                    ` : ''}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
+                    ` : `
+                    <main class="main-content">
+                        <header class="content-header">
+                            <div>
+                                <div class="breadcrumb">
+                                    <span>${t('AI设置')}</span>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:12px;align-items:center;">
+                                <button class="btn btn-primary upload-btn" id="saveAISettingsBtn">
+                                    ${icons.upload} ${t('保存设置')}
+                                </button>
+                            </div>
+                        </header>
+
+                        <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
+                            <div class="ai-nav-item active" data-section="api" style="padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;">API Settings</div>
+                            <div class="ai-nav-item" data-section="prompts" style="padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;">Prompts</div>
+                            <div class="ai-nav-item" data-section="safety" style="padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;">Safety Rules</div>
+                            <div class="ai-nav-item" data-section="replacement" style="padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;">Replacement Words</div>
+                        </div>
+
+                        <div class="content-body">
+                            <div style="padding:16px;max-width:900px;">
+                                <div id="ai-section-api" class="ai-section">
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">API URL</div>
+                                        <textarea class="detail-input auto-resize" id="aiApiUrl" placeholder="https://api.example.com/v1/chat/completions" style="min-height:44px;resize:none;overflow:hidden;white-space:nowrap;"></textarea>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">API Key</div>
+                                        <textarea class="detail-input auto-resize" id="aiApiKey" placeholder="sk-..." style="min-height:44px;resize:none;overflow:hidden;white-space:nowrap;"></textarea>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">Model</div>
+                                        <textarea class="detail-input auto-resize" id="aiModel" placeholder="gpt-4-vision-preview" style="min-height:44px;resize:none;overflow:hidden;white-space:nowrap;"></textarea>
+                                    </div>
+                                </div>
+
+                                <div id="ai-section-prompts" class="ai-section" style="display:none;">
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">Title Prompt</div>
+                                        <textarea class="detail-input auto-resize" id="aiTitlePrompt" placeholder="" style="min-height:150px;resize:none;overflow:hidden;"></textarea>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">Description Prompt</div>
+                                        <textarea class="detail-input auto-resize" id="aiDescPrompt" placeholder="" style="min-height:150px;resize:none;overflow:hidden;"></textarea>
+                                    </div>
+                                </div>
+
+                                <div id="ai-section-safety" class="ai-section" style="display:none;">
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">Safety Rules</div>
+                                        <textarea class="detail-input auto-resize" id="aiSafetyRules" placeholder="Enter content safety validation rules for reference after AI generation..." style="min-height:300px;resize:none;overflow:hidden;"></textarea>
+                                    </div>
+                                </div>
+
+                                <div id="ai-section-replacement" class="ai-section" style="display:none;">
+                                    <div class="detail-group">
+                                        <div class="detail-group-title">Replacement Words</div>
+                                        <textarea class="detail-input auto-resize" id="aiReplacementWords" placeholder='Enter JSON format: [{"original":"敏感词1","replacement":"替换词1"},{"original":"敏感词2","replacement":"替换词2"}]' style="min-height:300px;resize:none;overflow:hidden;font-family:monospace;font-size:13px;"></textarea>
+                                        <div style="margin-top:8px;font-size:12px;color:var(--text-secondary);">
+                                            Format: JSON array, e.g. [{"original":"sensitive","replacement":"safe"}]
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                    `}
+                </div>
+                ${renderDetailModal()}
+                ${renderBatchCopyModal()}
+                ${renderBatchMoveModal()}
+                ${renderCreateUserModal()}
+                ${renderDeleteUserModal()}
+                ${renderUploadProgressModal()}
+            `;
+        }
+
+        function renderEmptyState() {
+            return `
+                <div class="empty-state">
+                    ${icons.photo}
+                    <p>${t('暂无素材')}</p>
+                </div>
+            `;
+        }
+
+        function renderMaterialGrid(materials) {
+            return `
+                <div class="material-grid">
+                    ${materials.map(m => renderMaterialCard(m)).join('')}
+                </div>
+            `;
+        }
+
+        function renderMaterialCard(m) {
+            const usageClass = m.usage_tag === 'unused' ? 'tag-usage-unused' : 'tag-usage-used';
+            const viralClass = m.viral_tag === 'viral' ? 'tag-viral-yes' : 'tag-viral-not';
+            const displayTitle = m.title || m.filename;
+            const isSelected = state.selectedMaterialIds.has(m.id);
+            const hasPreview = m.oss_key && m.oss_key.startsWith('/uploads/');
+            const isDeleted = !!m.deleted_at;
+            const showDownloadBtn = !isDeleted;
+            const ownerUser = state.users.find(u => u.id === m.user_id);
+
+            let thumbnailContent = '';
+            if (hasPreview && m.folder_type !== 'videos') {
+                // 图片可以正常显示预览
+                thumbnailContent = `<img src="${m.oss_key}" ${isDeleted ? 'style="opacity:0.5;"' : ''} alt="" style="width:100%;height:100%;object-fit:cover;">`;
+            } else {
+                // 视频只用图标显示，不预加载（避免内存问题）
+                thumbnailContent = `<span style="font-size:48px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--text-secondary);">${icons.video}</span>`;
+            }
+
+            return `
+                <div class="material-card ${state.isSelectMode ? 'selectable' : ''} ${isSelected ? 'selected' : ''}" data-material-id="${m.id}">
+                    ${state.isSelectMode ? `
+                        <div class="select-checkbox">
+                            ${icons.check}
+                        </div>
+                    ` : ''}
+                    ${showDownloadBtn ? `
+                        <div class="card-download-btn" data-download-id="${m.id}" onclick="event.stopPropagation(); downloadMaterial('${m.oss_key || ''}', '${escapeHtml(m.filename)}');">
+                            ${icons.download}
+                        </div>
+                    ` : ''}
+                    <div class="material-thumbnail">
+                        ${thumbnailContent}
+                    </div>
+                    <div class="material-info">
+                        <div class="material-name">${escapeHtml(displayTitle)}</div>
+                        ${state.isTrashView && ownerUser ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">用户: ${escapeHtml(ownerUser.name)}</div>` : ''}
+                        <div class="material-tags">
+                            ${isDeleted ? `<span class="tag" style="background:var(--red-light);color:var(--red);">${t('已删除')}</span>` : ''}
+                            <span class="tag ${usageClass}">${UsageTag[m.usage_tag]?.displayName || m.usage_tag}</span>
+                            <span class="tag ${viralClass}">${ViralTag[m.viral_tag]?.displayName || m.viral_tag}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDetailModal() {
+            const m = state.selectedMaterial;
+            if (!m) {
+                return '<div class="modal-overlay" id="modalOverlay"></div>';
+            }
+
+            const hasPreview = m.oss_key && m.oss_key.startsWith('/uploads/');
+            const isVideo = m.folder_type === 'videos';
+            let previewContent = '';
+            if (hasPreview && isVideo) {
+                previewContent = `
+                    <video id="detailVideo" src="${m.oss_key}" controls style="max-width:100%;max-height:300px;"></video>
+                    ${state.currentScreenshot ? `
+                        <div style="margin-top:12px;">
+                            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${t('已选择截图')}：</div>
+                            <img src="${state.currentScreenshot}" style="max-width:100%;max-height:150px;border-radius:8px;">
+                        </div>
+                    ` : ''}
+                `;
+            } else if (hasPreview) {
+                previewContent = `<img src="${m.oss_key}" style="max-width:100%;max-height:300px;object-fit:contain;">`;
+            } else {
+                previewContent = icons.video;
+            }
+
+            return `
+                <div class="modal-overlay visible" id="modalOverlay">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('素材详情')}</span>
+                            <button class="modal-close" id="closeModal">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="detail-thumbnail">
+                                ${previewContent}
+                            </div>
+
+                            ${hasPreview && isVideo ? `
+                                <div style="margin-bottom:16px;text-align:center;">
+                                    <button class="btn btn-secondary" id="screenshotBtn" style="font-size:14px;padding:8px 16px;">
+                                        📷 ${t('截图')}
+                                    </button>
+                                </div>
+                            ` : ''}
+
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('基本信息')}</div>
+                                <div class="copy-row">
+                                    <div class="copy-input-wrapper">
+                                        <textarea class="detail-input auto-resize" id="detailTitle" placeholder="${t('标题')}" style="min-height:44px;resize:none;overflow:hidden;">${escapeHtml(m.title || '')}</textarea>
+                                    </div>
+                                    <div class="detail-actions-row">
+                                        <button class="ai-generate-btn" id="aiGenerateTitleBtn">
+                                            ✨ ${t('AI生成标题')}
+                                        </button>
+                                        <button class="translate-btn" id="translateTitleBtn">
+                                            🌐 Translate
+                                        </button>
+                                        <button class="copy-btn" data-copy-target="detailTitle">
+                                            ${icons.copy} ${t('复制')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-group">
+                                <div class="copy-row">
+                                    <div class="copy-input-wrapper">
+                                        <textarea class="detail-input auto-resize" id="detailDesc" placeholder="${t('描述')}" style="min-height:80px;resize:none;overflow:hidden;">${escapeHtml(m.description || '')}</textarea>
+                                    </div>
+                                    <div class="detail-actions-row">
+                                        <button class="ai-generate-btn" id="aiGenerateDescBtn">
+                                            ✨ ${t('AI生成文案')}
+                                        </button>
+                                        <button class="translate-btn" id="translateDescBtn">
+                                            🌐 Translate
+                                        </button>
+                                        <button class="copy-btn" data-copy-target="detailDesc">
+                                            ${icons.copy} ${t('复制')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('使用状态')}</div>
+                                <div class="segmented-control">
+                                    <button class="segment-btn ${m.usage_tag === 'unused' ? 'active' : ''}" data-usage="unused">${t('未使用')}</button>
+                                    <button class="segment-btn ${m.usage_tag === 'used' ? 'active' : ''}" data-usage="used">${t('使用过')}</button>
+                                </div>
+                            </div>
+
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('爆款标签')}</div>
+                                <div class="segmented-control">
+                                    <button class="segment-btn ${m.viral_tag !== 'viral' ? 'active' : ''}" data-viral="notViral">${t('未爆')}</button>
+                                    <button class="segment-btn ${m.viral_tag === 'viral' ? 'active' : ''}" data-viral="viral">${t('爆款')}</button>
+                                </div>
+                            </div>
+
+                            <div class="detail-group">
+                                <div class="file-info">
+                                    <p><strong>${t('文件名')}:</strong> ${escapeHtml(m.filename)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="justify-content:space-between;">
+                            <div>
+                                ${m.folder_type === 'videos' ? `
+                                    ${m.oss_key ? `
+                                        <a href="${m.oss_key}" download="${m.filename || 'download'}" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">
+                                            <span style="margin-right:6px;">⬇️</span>
+                                            ${t('下载视频')}
+                                        </a>
+                                    ` : `
+                                        <button class="btn btn-secondary" onclick="alert('${t('该素材是示例数据，暂无法下载')}');" style="display:inline-flex;align-items:center;">
+                                            <span style="margin-right:6px;">⬇️</span>
+                                            ${t('下载视频')}
+                                        </button>
+                                    `}
+                                ` : (m.oss_key && m.oss_key.startsWith('/uploads/')) ? `
+                                    <a href="${m.oss_key}" download="${m.filename || 'download'}" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;">
+                                        <span style="margin-right:6px;">⬇️</span>
+                                        ${t('下载图片')}
+                                    </a>
+                                ` : ''}
+                            </div>
+                            <div style="display:flex;gap:12px;">
+                                <button class="btn btn-secondary" id="cancelDetail">${t('取消')}</button>
+                                <button class="btn btn-primary" id="saveDetail">${t('保存')}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBatchCopyModal() {
+            if (!state.showBatchCopyModal) {
+                return '<div class="modal-overlay" id="batchCopyModalOverlay"></div>';
+            }
+
+            const otherUsers = state.users.filter(u => u.id !== state.currentUser?.id);
+            const folderLabel = state.currentFolder === 'images' ? t('图片') : t('视频');
+
+            return `
+                <div class="modal-overlay visible" id="batchCopyModalOverlay">
+                    <div class="modal copy-user-modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('复制给其他用户')}</span>
+                            <button class="modal-close" id="closeBatchCopyModal">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom:16px;color:var(--text-secondary);font-size:14px;">
+                                ${t('将')} <strong>${state.selectedMaterialIds.size} ${t('个素材')}</strong> ${t('复制到以下用户的')}<strong>${folderLabel}</strong>${t('文件夹')}：
+                            </p>
+                            <div class="copy-user-list">
+                                ${otherUsers.map(u => `
+                                    <div class="copy-user-item" data-user-id="${u.id}">
+                                        <div class="copy-user-avatar">${u.name.charAt(0)}</div>
+                                        <div class="copy-user-info">
+                                            <div class="copy-user-name">${u.name}</div>
+                                            <div class="copy-user-desc">${tFormat('复制到「图片」文件夹', { '图片': folderLabel })}</div>
+                                        </div>
+                                        <span class="copy-folder-badge">${folderLabel}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBatchMoveModal() {
+            if (!state.showBatchMoveModal) {
+                return '<div class="modal-overlay" id="batchMoveModalOverlay"></div>';
+            }
+
+            const otherUsers = state.users.filter(u => u.id !== state.currentUser?.id);
+            const folderLabel = state.currentFolder === 'images' ? t('图片') : t('视频');
+
+            return `
+                <div class="modal-overlay visible" id="batchMoveModalOverlay">
+                    <div class="modal copy-user-modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('移动给其他用户')}</span>
+                            <button class="modal-close" id="closeBatchMoveModal">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom:16px;color:var(--text-secondary);font-size:14px;">
+                                ${t('将')} <strong>${state.selectedMaterialIds.size} ${t('个素材')}</strong> ${t('移动到以下用户的')}<strong>${folderLabel}</strong>${t('文件夹')}：
+                            </p>
+                            <div class="copy-user-list">
+                                ${otherUsers.map(u => `
+                                    <div class="copy-user-item" data-user-id="${u.id}">
+                                        <div class="copy-user-avatar">${u.name.charAt(0)}</div>
+                                        <div class="copy-user-info">
+                                            <div class="copy-user-name">${u.name}</div>
+                                            <div class="copy-user-desc">${tFormat('移动到「图片」文件夹', { '图片': folderLabel })}</div>
+                                        </div>
+                                        <span class="copy-folder-badge">${folderLabel}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCreateUserModal() {
+            if (!state.showCreateUserModal) {
+                return '<div class="modal-overlay" id="createUserOverlay"></div>';
+            }
+
+            return `
+                <div class="modal-overlay visible" id="createUserOverlay">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('创建用户')}</span>
+                            <button class="modal-close" id="closeCreateUserModal">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>${t('用户名')}</label>
+                                <input type="text" id="newUserName" placeholder="${t('请输入用户名')}">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelCreateUser">${t('取消')}</button>
+                            <button class="btn btn-primary" id="confirmCreateUser">${t('创建')}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDeleteUserModal() {
+            if (!state.showDeleteUserModal) {
+                return '<div class="modal-overlay" id="deleteUserOverlay"></div>';
+            }
+
+            return `
+                <div class="modal-overlay visible" id="deleteUserOverlay">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('确认删除')}</span>
+                            <button class="modal-close" id="closeDeleteUserModal">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <p>${t('确认删除用户「')}${state.userToDelete ? escapeHtml(state.userToDelete.name) : ''}${t('」？')}</p>
+                            <p style="margin-top:8px;color:var(--text-secondary);font-size:14px;">${t('该用户的所有素材将转移给管理员。')}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelDeleteUser">${t('取消')}</button>
+                            <button class="btn btn-primary" style="background:var(--red);" id="confirmDeleteUser">${t('删除')}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUploadProgressModal() {
+            if (!state.isUploading) {
+                return '<div class="modal-overlay" id="uploadProgressOverlay"></div>';
+            }
+
+            const { total, current, fileName, percent } = state.uploadProgress;
+
+            return `
+                <div class="modal-overlay visible" id="uploadProgressOverlay">
+                    <div class="modal upload-progress-modal">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('上传中')}...</span>
+                        </div>
+                        <div class="modal-body">
+                            <div class="upload-progress-info">
+                                <div class="upload-progress-file">${escapeHtml(fileName)}</div>
+                                <div class="upload-progress-text">
+                                    ${t('文件')} ${current} / ${total} · ${percent}%
+                                </div>
+                            </div>
+                            <div class="upload-progress-bar-container">
+                                <div class="upload-progress-bar ${percent === 100 ? 'complete' : ''}"
+                                     style="width: ${percent}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAISettingsModal() {
+            if (!state.showAISettingsModal) {
+                return '<div class="modal-overlay" id="aiSettingsOverlay"></div>';
+            }
+
+            return `
+                <div class="modal-overlay visible" id="aiSettingsOverlay">
+                    <div class="modal" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <span class="modal-title">${t('AI设置')}</span>
+                            <button class="modal-close" id="closeAISettings">${icons.close}</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('API地址')}</div>
+                                <input type="text" class="detail-input" id="aiApiUrl-modal" placeholder="https://api.example.com/v1/chat/completions" value="${escapeAttr(state.aiSettings.api_url || '')}">
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('API密钥')}</div>
+                                <input type="password" class="detail-input" id="aiApiKey-modal" placeholder="sk-..." value="${escapeAttr(state.aiSettings.api_key || '')}">
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('模型')}</div>
+                                <input type="text" class="detail-input" id="aiModel-modal" placeholder="gpt-4-vision-preview" value="${escapeAttr(state.aiSettings.model || '')}">
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('标题生成提示词')}</div>
+                                <textarea class="detail-input" id="aiTitlePrompt-modal" placeholder="" style="min-height: 100px;">${escapeTextarea(state.aiSettings.title_prompt || '')}</textarea>
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-group-title">${t('文案生成提示词')}</div>
+                                <textarea class="detail-input" id="aiDescPrompt-modal" placeholder="" style="min-height: 100px;">${escapeTextarea(state.aiSettings.description_prompt || '')}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="cancelAISettings">${t('取消')}</button>
+                            <button class="btn btn-primary" id="saveAISettings">${t('保存设置')}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 自动调整 textarea 高度
+        function autoResizeTextarea(textarea) {
+            if (!textarea) return;
+            // 先重置高度以获取正确的 scrollHeight
+            textarea.style.height = 'auto';
+            // 设置新高度
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // 初始化所有 auto-resize textarea
+        function initAutoResizeTextareas() {
+            document.querySelectorAll('.auto-resize').forEach(textarea => {
+                autoResizeTextarea(textarea);
+                // 输入时也自动调整
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+            });
+        }
+
+        // 切换 AI 设置导航栏
+        function switchAISection(section) {
+            // 隐藏所有 section
+            document.querySelectorAll('.ai-section').forEach(el => {
+                el.style.display = 'none';
+            });
+            // 移除所有 nav-item 的 active 状态
+            document.querySelectorAll('.ai-nav-item').forEach(el => {
+                el.classList.remove('active');
+                el.style.borderBottomColor = 'transparent';
+            });
+            // 显示选中的 section
+            document.getElementById('ai-section-' + section).style.display = 'block';
+            // 给选中的 nav-item 添加 active 状态
+            const activeNav = document.querySelector('.ai-nav-item[data-section="' + section + '"]');
+            if (activeNav) {
+                activeNav.classList.add('active');
+                activeNav.style.borderBottomColor = 'var(--primary)';
+            }
+            // 初始化新显示 section 中的自适应 textarea
+            setTimeout(() => {
+                initAutoResizeTextareas();
+            }, 10);
+        }
+
+        async function loadAISettings() {
+            try {
+                const data = await apiRequest(`${API_BASE}/ai/settings`);
+                if (!data.error) {
+                    state.aiSettings = {
+                        api_url: data.api_url || '',
+                        api_key: data.api_key || '',
+                        model: data.model || '',
+                        title_prompt: data.title_prompt || '',
+                        description_prompt: data.description_prompt || '',
+                        safety_rules: data.safety_rules || '',
+                        replacement_words: data.replacement_words || ''
+                    };
+                }
+            } catch (e) {
+                console.error('Load AI settings error:', e);
+            }
+        }
+
+        async function saveAISettings() {
+            try {
+                const data = await apiRequest(`${API_BASE}/ai/settings`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        current_user_id: state.currentUser?.id,
+                        api_url: document.getElementById('aiApiUrl')?.value || '',
+                        api_key: document.getElementById('aiApiKey')?.value || '',
+                        model: document.getElementById('aiModel')?.value || '',
+                        title_prompt: document.getElementById('aiTitlePrompt')?.value || '',
+                        description_prompt: document.getElementById('aiDescPrompt')?.value || '',
+                        safety_rules: document.getElementById('aiSafetyRules')?.value || '',
+                        replacement_words: document.getElementById('aiReplacementWords')?.value || ''
+                    })
+                });
+                if (!data.error) {
+                    alert(t('设置已保存'));
+                    await loadAISettings();
+                    render();
+                }
+            } catch (e) {
+                console.error('Save AI settings error:', e);
+            }
+        }
+
+        function attachEventListeners() {
+            console.log('Attaching event listeners...');
+
+            document.getElementById('loginBtn')?.addEventListener('click', () => {
+                const select = document.getElementById('loginUserSelect');
+                const username = select?.value;
+                if (username) {
+                    handleLogin(username);
+                } else {
+                    alert(t('请选择用户'));
+                }
+            });
+
+            document.getElementById('logoutBtn')?.addEventListener('click', () => {
+                state.isLoggedIn = false;
+                state.currentUser = null;
+                state.currentUserRole = null;
+                state.isTrashView = false;
+                state.materials = [];
+                state.selectedMaterialIds.clear();
+                localStorage.removeItem('nasMaterialManager_login');
+                loadUsers();
+                render();
+            });
+
+            document.getElementById('hamburgerBtn')?.addEventListener('click', () => {
+                state.sidebarOpen = true;
+                document.body.classList.add('sidebar-open');
+                render();
+            });
+
+            document.getElementById('sidebarCloseBtn')?.addEventListener('click', () => {
+                state.sidebarOpen = false;
+                document.body.classList.remove('sidebar-open');
+                render();
+            });
+
+            document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+                state.sidebarOpen = false;
+                document.body.classList.remove('sidebar-open');
+                render();
+            });
+
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.addEventListener('click', async () => {
+                    const userId = item.dataset.userId;
+                    state.currentViewingUserId = userId;
+                    state.currentView = 'materials';
+                    state.currentFolder = 'videos';
+                    state.isTrashView = false;
+                    state.isSelectMode = false;
+                    state.selectedMaterialIds.clear();
+                    if (window.innerWidth <= 480) {
+                        state.sidebarOpen = false;
+                        document.body.classList.remove('sidebar-open');
+                    }
+                    await loadMaterials();
+                    render();
+                });
+            });
+
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.addEventListener('click', async () => {
+                    const view = item.dataset.view;
+                    if (view) {
+                        switchView(view);
+                        return;
+                    }
+                    const isTrash = item.dataset.trash === 'true';
+                    state.isTrashView = isTrash;
+                    if (!isTrash) {
+                        state.currentFolder = item.dataset.folder;
+                    }
+                    state.isSelectMode = false;
+                    state.selectedMaterialIds.clear();
+                    if (window.innerWidth <= 480) {
+                        state.sidebarOpen = false;
+                        document.body.classList.remove('sidebar-open');
+                    }
+                    await loadMaterials();
+                    render();
+                });
+            });
+
+            document.querySelectorAll('.material-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.dataset.materialId;
+                    if (state.isSelectMode) {
+                        if (state.selectedMaterialIds.has(id)) {
+                            state.selectedMaterialIds.delete(id);
+                        } else {
+                            state.selectedMaterialIds.add(id);
+                        }
+                        render();
+                    } else {
+                        const materials = state.isTrashView
+                            ? state.materials
+                            : (state.currentFolder === 'images'
+                                ? state.materials.filter(m => m.folder_type === 'images')
+                                : state.materials.filter(m => m.folder_type === 'videos'));
+                        state.selectedMaterial = materials.find(m => m.id === id);
+                        render();
+                    }
+                });
+            });
+
+            document.getElementById('toggleSelectMode')?.addEventListener('click', () => {
+                state.isSelectMode = !state.isSelectMode;
+                state.selectedMaterialIds.clear();
+                render();
+            });
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            console.log('Upload button:', uploadBtn);
+            uploadBtn?.addEventListener('click', () => {
+                console.log('Upload button clicked');
+                document.getElementById('fileInput')?.click();
+            });
+
+            document.getElementById('fileInput')?.addEventListener('change', async (e) => {
+                console.log('File input changed');
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    await handleFileUpload(files);
+                }
+            });
+
+            document.getElementById('selectAllBtn')?.addEventListener('click', toggleSelectAll);
+            document.getElementById('batchTrashBtn')?.addEventListener('click', handleBatchTrash);
+            document.getElementById('batchRestoreBtn')?.addEventListener('click', handleBatchRestore);
+            document.getElementById('batchPermanentDeleteBtn')?.addEventListener('click', handleBatchPermanentDelete);
+
+            document.getElementById('batchCopyBtn')?.addEventListener('click', () => {
+                console.log('Batch copy button clicked');
+                state.showBatchCopyModal = true;
+                render();
+            });
+
+            document.getElementById('batchMoveBtn')?.addEventListener('click', () => {
+                console.log('Batch move button clicked');
+                state.showBatchMoveModal = true;
+                render();
+            });
+
+            document.getElementById('closeModal')?.addEventListener('click', closeModal);
+            document.getElementById('cancelDetail')?.addEventListener('click', closeModal);
+            document.getElementById('modalOverlay')?.addEventListener('click', (e) => {
+                if (e.target.id === 'modalOverlay') closeModal();
+            });
+
+            document.querySelectorAll('[data-usage]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('[data-usage]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            document.querySelectorAll('[data-viral]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('[data-viral]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            document.getElementById('saveDetail')?.addEventListener('click', handleSaveDetail);
+
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const targetId = btn.dataset.copyTarget;
+                    let text = '';
+                    if (targetId) {
+                        const input = document.getElementById(targetId);
+                        if (input) {
+                            text = input.value || input.innerText || '';
+                        }
+                    }
+
+                    console.log('Copying text:', text, 'from target:', targetId);
+
+                    if (text || text === '') {
+                        try {
+                            // 优先使用现代 clipboard API
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                await navigator.clipboard.writeText(text);
+                            } else {
+                                // 降级方案：使用传统方法
+                                const textArea = document.createElement('textarea');
+                                textArea.value = text;
+                                textArea.style.position = 'fixed';
+                                textArea.style.left = '-9999px';
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(textArea);
+                            }
+
+                            btn.innerHTML = icons.check + ' ' + t('已复制');
+                            btn.classList.add('copied');
+                            setTimeout(() => {
+                                btn.innerHTML = icons.copy + ' ' + t('复制');
+                                btn.classList.remove('copied');
+                            }, 2000);
+                        } catch (err) {
+                            console.error('Copy failed:', err);
+                            alert('复制失败，请手动复制');
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('closeBatchCopyModal')?.addEventListener('click', () => {
+                state.showBatchCopyModal = false;
+                render();
+            });
+
+            document.getElementById('batchCopyModalOverlay')?.addEventListener('click', (e) => {
+                if (e.target.id === 'batchCopyModalOverlay') {
+                    state.showBatchCopyModal = false;
+                    render();
+                }
+            });
+
+            document.querySelectorAll('#batchCopyModalOverlay .copy-user-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    handleBatchCopy(item.dataset.userId);
+                });
+            });
+
+            document.getElementById('closeBatchMoveModal')?.addEventListener('click', () => {
+                state.showBatchMoveModal = false;
+                render();
+            });
+
+            document.getElementById('batchMoveModalOverlay')?.addEventListener('click', (e) => {
+                if (e.target.id === 'batchMoveModalOverlay') {
+                    state.showBatchMoveModal = false;
+                    render();
+                }
+            });
+
+            document.querySelectorAll('#batchMoveModalOverlay .copy-user-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    handleBatchMove(item.dataset.userId);
+                });
+            });
+
+            document.getElementById('createUserBtn')?.addEventListener('click', openCreateUserModal);
+            document.getElementById('closeCreateUserModal')?.addEventListener('click', closeCreateUserModal);
+            document.getElementById('cancelCreateUser')?.addEventListener('click', closeCreateUserModal);
+            document.getElementById('confirmCreateUser')?.addEventListener('click', createUser);
+
+            document.getElementById('closeDeleteUserModal')?.addEventListener('click', closeDeleteUserModal);
+            document.getElementById('cancelDeleteUser')?.addEventListener('click', closeDeleteUserModal);
+            document.getElementById('confirmDeleteUser')?.addEventListener('click', deleteUser);
+
+            document.getElementById('saveAISettingsBtn')?.addEventListener('click', saveAISettings);
+
+            // AI 设置导航栏切换
+            document.querySelectorAll('.ai-nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    switchAISection(item.dataset.section);
+                });
+            });
+
+            // 初始化导航栏 active 状态
+            if (state.currentView === 'ai-settings') {
+                const activeNav = document.querySelector('.ai-nav-item.active');
+                if (activeNav) {
+                    activeNav.style.borderBottomColor = 'var(--primary)';
+                }
+            }
+
+            // 移除：不再自动加载视频缩略图（避免内存问题）
+
+            document.getElementById('screenshotBtn')?.addEventListener('click', () => {
+                const video = document.getElementById('detailVideo');
+                if (video) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    state.currentScreenshot = canvas.toDataURL('image/jpeg', 0.8);
+                    render();
+                }
+            });
+
+            document.getElementById('aiGenerateTitleBtn')?.addEventListener('click', async () => {
+                const m = state.selectedMaterial;
+                if (!m) return;
+
+                let imageBase64 = state.currentScreenshot;
+                if (!imageBase64 && m.oss_key) {
+                    const video = document.getElementById('detailVideo');
+                    if (video) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth || 640;
+                        canvas.height = video.videoHeight || 360;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    }
+                }
+
+                const currentTitle = document.getElementById('detailTitle')?.value || '';
+
+                const btn = document.getElementById('aiGenerateTitleBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '生成中...';
+                btn.disabled = true;
+
+                try {
+                    const data = await apiRequest(`${API_BASE}/ai/generate-title`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            image: imageBase64,
+                            current_user_id: state.currentUser?.id,
+                            current_title: currentTitle
+                        })
+                    });
+
+                    if (!data.error && data.title) {
+                        const titleInput = document.getElementById('detailTitle');
+                        titleInput.value = data.title;
+                        autoResizeTextarea(titleInput);
+                    } else {
+                        alert(data.error || '生成失败');
+                    }
+                } catch (e) {
+                    alert(t('生成失败: ') + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            document.getElementById('aiGenerateDescBtn')?.addEventListener('click', async () => {
+                const m = state.selectedMaterial;
+                if (!m) return;
+
+                let imageBase64 = state.currentScreenshot;
+                if (!imageBase64 && m.oss_key) {
+                    const video = document.getElementById('detailVideo');
+                    if (video) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth || 640;
+                        canvas.height = video.videoHeight || 360;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    }
+                }
+
+                const currentDesc = document.getElementById('detailDesc')?.value || '';
+
+                const btn = document.getElementById('aiGenerateDescBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '生成中...';
+                btn.disabled = true;
+
+                try {
+                    const data = await apiRequest(`${API_BASE}/ai/generate-description`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            image: imageBase64,
+                            current_user_id: state.currentUser?.id,
+                            current_description: currentDesc
+                        })
+                    });
+
+                    if (!data.error && data.description) {
+                        const descInput = document.getElementById('detailDesc');
+                        descInput.value = data.description;
+                        autoResizeTextarea(descInput);
+                    } else {
+                        alert(data.error || '生成失败');
+                    }
+                } catch (e) {
+                    alert(t('生成失败: ') + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // 翻译标题按钮
+            document.getElementById('translateTitleBtn')?.addEventListener('click', async () => {
+                const titleInput = document.getElementById('detailTitle');
+                const text = titleInput?.value?.trim();
+                if (!text) {
+                    alert('请先输入标题');
+                    return;
+                }
+
+                const btn = document.getElementById('translateTitleBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Translating...';
+                btn.disabled = true;
+
+                try {
+                    const data = await apiRequest(`${API_BASE}/ai/translate`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            text: text,
+                            current_user_id: state.currentUser?.id
+                        })
+                    });
+
+                    if (!data.error && data.translated) {
+                        titleInput.value = data.translated;
+                        autoResizeTextarea(titleInput);
+                    } else {
+                        alert(data.error || '翻译失败');
+                    }
+                } catch (e) {
+                    alert('翻译失败: ' + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // 翻译描述按钮
+            document.getElementById('translateDescBtn')?.addEventListener('click', async () => {
+                const descInput = document.getElementById('detailDesc');
+                const text = descInput?.value?.trim();
+                if (!text) {
+                    alert('请先输入描述');
+                    return;
+                }
+
+                const btn = document.getElementById('translateDescBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Translating...';
+                btn.disabled = true;
+
+                try {
+                    const data = await apiRequest(`${API_BASE}/ai/translate`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            text: text,
+                            current_user_id: state.currentUser?.id
+                        })
+                    });
+
+                    if (!data.error && data.translated) {
+                        descInput.value = data.translated;
+                        autoResizeTextarea(descInput);
+                    } else {
+                        alert(data.error || '翻译失败');
+                    }
+                } catch (e) {
+                    alert('翻译失败: ' + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+
+            // 初始化所有自适应高度的 textarea
+            initAutoResizeTextareas();
+
+            // 设置 AI 设置 textarea 的值
+            if (state.currentView === 'ai-settings') {
+                const aiApiUrl = document.getElementById('aiApiUrl');
+                const aiApiKey = document.getElementById('aiApiKey');
+                const aiModel = document.getElementById('aiModel');
+                const aiTitlePrompt = document.getElementById('aiTitlePrompt');
+                const aiDescPrompt = document.getElementById('aiDescPrompt');
+                const aiSafetyRules = document.getElementById('aiSafetyRules');
+                const aiReplacementWords = document.getElementById('aiReplacementWords');
+
+                if (aiApiUrl) aiApiUrl.value = state.aiSettings.api_url || '';
+                if (aiApiKey) aiApiKey.value = state.aiSettings.api_key || '';
+                if (aiModel) aiModel.value = state.aiSettings.model || '';
+                if (aiTitlePrompt) aiTitlePrompt.value = state.aiSettings.title_prompt || '';
+                if (aiDescPrompt) aiDescPrompt.value = state.aiSettings.description_prompt || '';
+                if (aiSafetyRules) aiSafetyRules.value = state.aiSettings.safety_rules || '';
+                if (aiReplacementWords) aiReplacementWords.value = state.aiSettings.replacement_words || '';
+
+                // 重新调整高度
+                initAutoResizeTextareas();
+            }
+        }
+
+        async function init() {
+            try {
+                const savedLogin = localStorage.getItem('nasMaterialManager_login');
+                if (savedLogin) {
+                    const loginData = JSON.parse(savedLogin);
+                    state.currentUser = loginData.currentUser;
+                    state.currentUserRole = loginData.currentUserRole;
+                    state.currentViewingUserId = loginData.currentViewingUserId;
+                    state.isLoggedIn = loginData.isLoggedIn;
+                }
+            } catch (e) {
+                console.error('Failed to restore login state:', e);
+                localStorage.removeItem('nasMaterialManager_login');
+            }
+
+            await loadUsers();
+
+            if (state.isLoggedIn) {
+                await loadMaterials();
+            }
+
+            render();
+        }
+
+        init();
+    </script>
+</body>
+</html>

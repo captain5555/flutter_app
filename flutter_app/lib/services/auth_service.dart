@@ -23,7 +23,10 @@ class AuthService {
         await TokenStorage.saveRefreshToken(data['refreshToken']);
       }
 
-      return User.fromJson(data['user']);
+      final user = User.fromJson(data['user']);
+      await TokenStorage.saveUser(user.id, user.username, user.role);
+
+      return user;
     }
 
     throw Exception('Login failed');
@@ -48,7 +51,7 @@ class AuthService {
     } catch (e) {
       // Ignore logout errors
     } finally {
-      await TokenStorage.clearTokens();
+      await TokenStorage.clearAuth();
     }
   }
 

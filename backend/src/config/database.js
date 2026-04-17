@@ -1,4 +1,5 @@
 const config = require('./index');
+const { getModels } = require('../models');
 
 let db;
 
@@ -10,4 +11,6 @@ if (config.databaseType === 'sqlite') {
   throw new Error(`Unsupported database type: ${config.databaseType}`);
 }
 
+// 导出 db（向后兼容）和 models
 module.exports = db;
+module.exports.models = getModels;

@@ -11,6 +11,8 @@ class ApiService {
   late final Dio _dio;
   bool _isInitialized = false;
 
+  bool get isInitialized => _isInitialized;
+
   Future<void> initialize() async {
     if (_isInitialized) return;
 

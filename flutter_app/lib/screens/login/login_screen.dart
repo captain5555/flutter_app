@@ -34,32 +34,52 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.login(
-        _usernameController.text.trim(),
-        _passwordController.text.trim(),
-      );
 
-      if (success && mounted) {
-        Navigator.of(context).pushReplacement(
-          CupertinoPageRoute(builder: (_) => const HomeScreen()),
+      try {
+        final success = await authProvider.login(
+          _usernameController.text.trim(),
+          _passwordController.text.trim(),
         );
-      } else if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('登录失败'),
-            content: Text(authProvider.error ?? '未知错误'),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text('确定'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  authProvider.clearError();
-                },
-              ),
-            ],
-          ),
-        );
+
+        if (success && mounted) {
+          Navigator.of(context).pushReplacement(
+            CupertinoPageRoute(builder: (_) => const HomeScreen()),
+          );
+        } else if (mounted) {
+          if (!mounted) return;
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('登录失败'),
+              content: Text(authProvider.error ?? '未知错误'),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('确定'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    authProvider.clearError();
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('登录异常'),
+              content: Text(e.toString()),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('确定'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        }
       }
     }
   }

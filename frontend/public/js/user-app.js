@@ -426,7 +426,7 @@ const UserApp = {
       Toast.show(`正在上传 ${files.length} 个文件...`, 'info');
 
       for (const file of files) {
-        await api.uploadMaterial(file, State.currentFolder);
+        await api.uploadMaterial(file, State.currentFolder, undefined);
       }
 
       Toast.show('上传成功');

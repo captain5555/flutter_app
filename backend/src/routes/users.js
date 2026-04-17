@@ -8,8 +8,14 @@ const { logOperation } = require('../middleware/logger');
 
 const router = express.Router();
 
-// Get all users (admin only)
-router.get('/', authenticateToken, requireRole('admin'), asyncHandler(async (req, res) => {
+// Get all users (public for login page - no auth required)
+router.get('/', asyncHandler(async (req, res) => {
+  const users = await db.getAllUsers();
+  sendSuccess(res, users);
+}));
+
+// Get all users (public for login page - no auth required) - alias for /
+router.get('/public', asyncHandler(async (req, res) => {
   const users = await db.getAllUsers();
   sendSuccess(res, users);
 }));
@@ -32,19 +38,29 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
 
 // Create user (admin only)
 router.post('/', authenticateToken, requireRole('admin'), asyncHandler(async (req, res) => {
-  const { username, password, role = 'user' } = req.body;
+  const { username, password = '', role = 'user' } = req.body;
+
+  console.log('[CreateUser] Request body:', { username, password: password ? '***' : '', role });
 
   const usernameValidation = validateUsername(username);
   if (!usernameValidation.valid) {
+    console.log('[CreateUser] Username validation failed:', usernameValidation.message);
     return sendError(res, usernameValidation.message);
   }
 
-  const passwordValidation = validatePassword(password);
-  if (!passwordValidation.valid) {
-    return sendError(res, passwordValidation.message);
+  // 只有当密码不为空时才验证密码（创建用户时密码可选）
+  if (password) {
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return sendError(res, passwordValidation.message);
+    }
   }
 
+  const allUsers = await db.getAllUsers();
+  console.log('[CreateUser] All existing users:', allUsers);
+
   const existingUser = await db.getUserByUsername(username);
+  console.log('[CreateUser] Existing user check for "' + username + '":', existingUser ? 'Found' : 'Not found', existingUser);
   if (existingUser) {
     return sendError(res, 'Username already exists');
   }
@@ -114,17 +130,17 @@ router.delete('/:id', authenticateToken, requireRole('admin'), asyncHandler(asyn
 
   // Don't allow deleting yourself
   if (targetUserId === req.user.id) {
-    return sendError(res, 'Cannot delete your own account');
+    return sendError(res, 'Cannot delete your own account', 400);
   }
 
-  const result = await db.deleteUser(targetUserId);
+  const result = await db.deleteUserAndTransferMaterials(targetUserId, 1); // admin id = 1
 
   await logOperation(
     req.user,
     'delete_user',
     'user',
     targetUserId,
-    null,
+    `Transferred ${result.transferredMaterials} materials`,
     getClientIp(req)
   );
 

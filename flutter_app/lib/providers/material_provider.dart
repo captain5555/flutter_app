@@ -105,9 +105,13 @@ class MaterialProvider with ChangeNotifier {
       await _materialService.batchTrash(ids);
 
       for (final id in ids) {
-        final material = _materials.firstWhere((m) => m.id == id);
-        _materials.removeWhere((m) => m.id == id);
-        _trashMaterials.add(material.copyWith(isDeleted: true));
+        try {
+          final material = _materials.firstWhere((m) => m.id == id);
+          _materials.removeWhere((m) => m.id == id);
+          _trashMaterials.add(material.copyWith(isDeleted: true));
+        } catch (e) {
+          // Material not found in list, skip
+        }
       }
       notifyListeners();
 

@@ -45,11 +45,11 @@ function sanitizeFilename(filename) {
 }
 
 function generateUniqueFilename(originalName) {
-  const ext = originalName.split('.').pop();
-  const baseName = sanitizeFilename(originalName.replace(/\.[^/.]+$/, ''));
+  const ext = (originalName.split('.').pop() || 'mp4').toLowerCase();
+  // 只使用时间戳和随机数生成安全的文件名，不依赖原始文件名
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
-  return `${baseName}_${timestamp}_${random}.${ext}`;
+  return `file_${timestamp}_${random}.${ext}`;
 }
 
 module.exports = {

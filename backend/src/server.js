@@ -5,6 +5,8 @@ const config = require('./config');
 const db = require('./config/database');
 const { initScheduledBackup } = require('./services/backup');
 const { sendError } = require('./utils/helpers');
+const { initListeners } = require('./listeners');
+const { eventBus, events } = require('./events');
 
 const app = express();
 
@@ -12,8 +14,8 @@ const app = express();
 app.use(cors({
   origin: config.cors.origins === '*' ? true : config.cors.origins.split(',')
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static files
 const uploadsPath = path.join(__dirname, '../data/uploads');
@@ -52,6 +54,13 @@ async function startServer() {
 
     // Initialize scheduled backups
     initScheduledBackup();
+
+    // Initialize event listeners (Phase 3 - optional enhancement)
+    initListeners();
+    console.log('Event listeners initialized');
+
+    // Emit system startup event
+    eventBus.emit(events.SYSTEM_STARTUP, { timestamp: Date.now() });
 
     app.listen(config.port, () => {
       console.log(`Server running on port ${config.port}`);

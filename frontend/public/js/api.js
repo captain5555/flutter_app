@@ -115,10 +115,13 @@ class API {
         return this.request(`/materials/${id}`);
     }
 
-    async uploadMaterial(file, folderType, onProgress) {
+    async uploadMaterial(file, folderType, targetUserId, onProgress) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('folderType', folderType);
+        if (targetUserId) {
+            formData.append('targetUserId', targetUserId);
+        }
 
         const token = this.getToken();
         const response = await fetch(`${this.baseUrl}/materials/upload`, {

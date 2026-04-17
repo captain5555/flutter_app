@@ -12,8 +12,8 @@ const router = express.Router();
 router.post('/login', asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
-  if (!username || !password) {
-    return sendError(res, 'Username and password are required');
+  if (!username) {
+    return sendError(res, 'Username is required');
   }
 
   const user = await db.getUserByUsername(username);
@@ -21,9 +21,17 @@ router.post('/login', asyncHandler(async (req, res) => {
     return sendError(res, 'Invalid username or password', 401);
   }
 
-  const validPassword = await bcrypt.compare(password, user.password_hash);
-  if (!validPassword) {
-    return sendError(res, 'Invalid username or password', 401);
+  // 如果用户没有设置密码（password_hash为空），则允许直接登录
+  let validPassword = true;
+  if (user.password_hash) {
+    // 只有当password_hash不为空时才验证密码
+    if (!password) {
+      return sendError(res, 'Password is required', 401);
+    }
+    validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return sendError(res, 'Invalid username or password', 401);
+    }
   }
 
   const token = generateToken(user.id);
@@ -93,14 +101,8 @@ router.post('/login-simple', asyncHandler(async (req, res) => {
     return sendError(res, 'User not found', 401);
   }
 
-  // Generate token
-  const jwt = require('jsonwebtoken');
-  const config = require('../config');
-  const token = jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
-    config.jwtSecret,
-    { expiresIn: config.jwtExpiresIn }
-  );
+  // Generate token using the same function as regular login
+  const token = generateToken(user.id);
 
   await logOperation(
     { id: user.id },

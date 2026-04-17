@@ -80,6 +80,12 @@
                         <select id="filter-user">
                             <option value="">所有用户</option>
                         </select>
+                        <select id="upload-folder-select">
+                            <option value="images">图片文件夹</option>
+                            <option value="videos">视频文件夹</option>
+                        </select>
+                        <button id="admin-upload-btn" class="btn primary">上传素材</button>
+                        <input type="file" id="admin-file-input" multiple style="display: none;">
                     </div>
                     <div id="admin-materials-grid" class="materials-grid"></div>
                 </div>
@@ -129,6 +135,7 @@
     <script src="js/state.js"></script>
     <script src="js/components/Toast.js"></script>
     <script src="js/components/Modal.js"></script>
+    <script src="js/components/MaterialCard.js"></script>
     <script src="js/pages/admin/dashboard.js"></script>
     <script src="js/pages/admin/users.js"></script>
     <script src="js/pages/admin/materials.js"></script>

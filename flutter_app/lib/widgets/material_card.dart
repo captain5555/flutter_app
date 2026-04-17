@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../models/material.dart';
 import '../constants/theme_constants.dart';
-import '../config/app_config.dart';
+import '../providers/settings_provider.dart';
 
 class MaterialCard extends StatelessWidget {
   final Material material;
@@ -18,16 +19,17 @@ class MaterialCard extends StatelessWidget {
     this.isSelected = false,
   });
 
-  String? _getThumbnailUrl() {
+  String? _getThumbnailUrl(String baseUrl) {
     if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
-      return '${AppConfig.defaultBaseUrl}${material.thumbnailPath}';
+      return '$baseUrl${material.thumbnailPath}';
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final thumbnailUrl = _getThumbnailUrl();
+    final settingsProvider = context.watch<SettingsProvider>();
+    final thumbnailUrl = _getThumbnailUrl(settingsProvider.baseUrl);
 
     return GestureDetector(
       onTap: onTap,

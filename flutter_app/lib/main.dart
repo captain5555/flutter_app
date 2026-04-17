@@ -71,8 +71,11 @@ class _AuthCheckState extends State<AuthCheck> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthProvider>().checkAuth();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<SettingsProvider>().loadSettings();
+      if (mounted) {
+        context.read<AuthProvider>().checkAuth();
+      }
     });
   }
 

@@ -3,7 +3,7 @@ import '../config/app_config.dart';
 import '../services/api_service.dart';
 
 class SettingsProvider with ChangeNotifier {
-  String _baseUrl = 'http://localhost:3000';
+  String _baseUrl = AppConfig.defaultBaseUrl;
   bool _isLoading = false;
   String? _error;
 
@@ -33,7 +33,11 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       await AppConfig.saveBaseUrl(url);
-      await ApiService().updateBaseUrl(url);
+      // 使用单例实例而不是创建新实例
+      final apiService = ApiService();
+      if (apiService.isInitialized) {
+        await apiService.updateBaseUrl(url);
+      }
       _baseUrl = url;
     } catch (e) {
       _error = e.toString();

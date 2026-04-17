@@ -2,13 +2,11 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const db = require('../config/database');
-const storage = require('../config/storage');
 const { authenticateToken } = require('../middleware/auth');
 const { isAdmin, canAccessMaterial, canAccessUser } = require('../middleware/permission');
-const { validateFile, generateUniqueFilename } = require('../utils/validators');
 const { asyncHandler, sendSuccess, sendError, getClientIp } = require('../utils/helpers');
 const { logOperation } = require('../middleware/logger');
+const materialService = require('../services/materialService');
 
 const router = express.Router();
 
@@ -18,11 +16,24 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
 
+// Fix filename encoding for Chinese characters
+function decodeFilename(filename) {
+  if (!filename) return filename;
+  try {
+    // Try to decode from latin1 to utf8 (common browser encoding issue)
+    return Buffer.from(filename, 'latin1').toString('utf8');
+  } catch (e) {
+    return filename;
+  }
+}
+
 const storageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, tempDir);
   },
   filename: (req, file, cb) => {
+    // Fix encoding for originalname
+    file.originalname = decodeFilename(file.originalname);
     const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
     cb(null, uniqueName);
   }
@@ -44,16 +55,7 @@ router.get('/user/:userId/folder/:folderType', authenticateToken, asyncHandler(a
     return sendError(res, 'Permission denied', 403);
   }
 
-  const materials = await db.getMaterials(userId, folderType);
-  // Add file URLs
-  for (const mat of materials) {
-    if (mat.file_path) {
-      mat.file_url = await storage.getFileUrl(mat.file_path);
-    }
-    if (mat.thumbnail_path) {
-      mat.thumbnail_url = await storage.getFileUrl(mat.thumbnail_path);
-    }
-  }
+  const materials = await materialService.getMaterials(userId, folderType);
   sendSuccess(res, materials);
 }));
 
@@ -63,12 +65,7 @@ router.get('/user/:userId/trash', authenticateToken, asyncHandler(async (req, re
   const { all } = req.query;
 
   if (all === 'true' && isAdmin(req)) {
-    const materials = await db.getAllTrashMaterials();
-    for (const mat of materials) {
-      if (mat.file_path) {
-        mat.file_url = await storage.getFileUrl(mat.file_path);
-      }
-    }
+    const materials = await materialService.getTrashMaterials(userId, true);
     sendSuccess(res, materials);
     return;
   }
@@ -77,21 +74,13 @@ router.get('/user/:userId/trash', authenticateToken, asyncHandler(async (req, re
     return sendError(res, 'Permission denied', 403);
   }
 
-  const materials = await db.getTrashMaterials(userId);
-  for (const mat of materials) {
-    if (mat.file_path) {
-      mat.file_url = await storage.getFileUrl(mat.file_path);
-    }
-    if (mat.thumbnail_path) {
-      mat.thumbnail_url = await storage.getFileUrl(mat.thumbnail_path);
-    }
-  }
+  const materials = await materialService.getTrashMaterials(userId, false);
   sendSuccess(res, materials);
 }));
 
 // Get single material
 router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
-  const material = await db.getMaterial(parseInt(req.params.id));
+  const material = await materialService.getMaterial(parseInt(req.params.id));
   if (!material) {
     return sendError(res, 'Material not found', 404);
   }
@@ -100,59 +89,29 @@ router.get('/:id', authenticateToken, asyncHandler(async (req, res) => {
     return sendError(res, 'Permission denied', 403);
   }
 
-  if (material.file_path) {
-    material.file_url = await storage.getFileUrl(material.file_path);
-  }
-  if (material.thumbnail_path) {
-    material.thumbnail_url = await storage.getFileUrl(material.thumbnail_path);
-  }
-
   sendSuccess(res, material);
 }));
 
 // Upload material
 router.post('/upload', authenticateToken, upload.single('file'), asyncHandler(async (req, res) => {
-  const { folderType = 'images' } = req.body;
-
-  const fileValidation = validateFile(req.file, folderType);
-  if (!fileValidation.valid) {
-    // Clean up temp file
-    try {
-      if (req.file?.path && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-    } catch (e) {
-      console.error('Cleanup error:', e);
-    }
-    return sendError(res, fileValidation.message);
-  }
-
-  const isImage = folderType === 'images' || folderType === 'image';
-  const filename = generateUniqueFilename(req.file.originalname);
-  const filePath = path.join(folderType, filename);
-
   try {
-    const uploadResult = await storage.uploadFile(req.file.path, filePath, {
-      generateThumbnail: true,
-      isImage
-    });
+    // Determine target user: if admin provides user_id or targetUserId, use it; otherwise use current user
+    const isAdminUser = isAdmin(req);
+    const targetUserId = (req.body.user_id || req.body.targetUserId) ? parseInt(req.body.user_id || req.body.targetUserId) : req.user.id;
 
-    const material = await db.createMaterial({
-      user_id: req.user.id,
-      folder_type: folderType,
-      file_name: req.file.originalname,
-      file_path: filePath,
-      file_size: req.file.size,
-      file_type: req.file.mimetype,
-      thumbnail_path: uploadResult.thumbnailPath
-    });
+    // Permission check: only admin can upload for other users
+    if (targetUserId !== req.user.id && !isAdminUser) {
+      return sendError(res, 'Permission denied', 403);
+    }
+
+    const material = await materialService.upload(targetUserId, req.body, req.file);
 
     await logOperation(
       req.user,
       'upload_material',
       'material',
       material.id,
-      req.file.originalname,
+      material.file_name,
       getClientIp(req)
     );
 
@@ -173,7 +132,7 @@ router.post('/upload', authenticateToken, upload.single('file'), asyncHandler(as
 // Update material
 router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
   const materialId = parseInt(req.params.id);
-  const material = await db.getMaterial(materialId);
+  const material = await materialService.getMaterial(materialId);
 
   if (!material) {
     return sendError(res, 'Material not found', 404);
@@ -183,7 +142,7 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
     return sendError(res, 'Permission denied', 403);
   }
 
-  const updated = await db.updateMaterial(materialId, req.body);
+  const updated = await materialService.updateMaterial(materialId, req.body);
 
   await logOperation(
     req.user,
@@ -200,7 +159,7 @@ router.put('/:id', authenticateToken, asyncHandler(async (req, res) => {
 // Delete material (move to trash)
 router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
   const materialId = parseInt(req.params.id);
-  const material = await db.getMaterial(materialId);
+  const material = await materialService.getMaterial(materialId);
 
   if (!material) {
     return sendError(res, 'Material not found', 404);
@@ -210,7 +169,7 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
     return sendError(res, 'Permission denied', 403);
   }
 
-  const result = await db.deleteMaterial(materialId);
+  const result = await materialService.deleteMaterial(materialId, req.user.id);
 
   await logOperation(
     req.user,
@@ -227,11 +186,20 @@ router.delete('/:id', authenticateToken, asyncHandler(async (req, res) => {
 // Batch move to trash
 router.post('/batch/trash', authenticateToken, asyncHandler(async (req, res) => {
   const { ids } = req.body;
+
+  console.log('=== batch/trash called ===');
+  console.log('User:', req.user);
+  console.log('isAdmin:', isAdmin(req));
+  console.log('Ids:', ids);
+
   if (!ids || !Array.isArray(ids)) {
     return sendError(res, 'Invalid ids');
   }
 
-  const result = await db.batchMoveToTrash(ids, req.user.id);
+  const isAdminUser = isAdmin(req);
+  const result = await materialService.batchMoveToTrash(ids, req.user.id, isAdminUser);
+
+  console.log('Result:', result);
 
   await logOperation(
     req.user,
@@ -248,11 +216,13 @@ router.post('/batch/trash', authenticateToken, asyncHandler(async (req, res) => 
 // Batch restore
 router.post('/batch/restore', authenticateToken, asyncHandler(async (req, res) => {
   const { ids } = req.body;
+
   if (!ids || !Array.isArray(ids)) {
     return sendError(res, 'Invalid ids');
   }
 
-  const result = await db.batchRestore(ids, req.user.id);
+  const isAdminUser = isAdmin(req);
+  const result = await materialService.batchRestore(ids, req.user.id, isAdminUser);
 
   await logOperation(
     req.user,
@@ -267,21 +237,16 @@ router.post('/batch/restore', authenticateToken, asyncHandler(async (req, res) =
 }));
 
 // Batch permanent delete
-router.delete('/batch', authenticateToken, asyncHandler(async (req, res) => {
+router.delete('/batch/permanent', authenticateToken, asyncHandler(async (req, res) => {
   const { ids } = req.body;
+
   if (!ids || !Array.isArray(ids)) {
     return sendError(res, 'Invalid ids');
   }
 
-  const result = await db.batchDelete(ids, req.user.id);
-
-  // Delete actual files
-  for (const filePath of result.filePaths || []) {
-    await storage.deleteFile(filePath);
-  }
-  for (const thumbPath of result.thumbnailPaths || []) {
-    await storage.deleteFile(thumbPath);
-  }
+  // 管理员可以删除任何用户的素材，普通用户只能删除自己的
+  const isAdminUser = isAdmin(req);
+  const result = await materialService.batchPermanentDelete(ids, isAdminUser ? null : req.user.id);
 
   await logOperation(
     req.user,
@@ -297,25 +262,28 @@ router.delete('/batch', authenticateToken, asyncHandler(async (req, res) => {
 
 // Batch copy
 router.post('/batch/copy', authenticateToken, asyncHandler(async (req, res) => {
-  const { ids, targetUserId } = req.body;
+  const { ids, sourceUserId, targetUserId } = req.body;
 
   if (!ids || !Array.isArray(ids) || !targetUserId) {
     return sendError(res, 'Missing required fields');
   }
 
-  // Only admin can copy to other users
-  if (targetUserId !== req.user.id && !isAdmin(req)) {
+  const isAdminUser = isAdmin(req);
+  const actualSourceUserId = sourceUserId || req.user.id;
+
+  // Only admin can copy from/to other users
+  if ((actualSourceUserId !== req.user.id || targetUserId !== req.user.id) && !isAdminUser) {
     return sendError(res, 'Permission denied', 403);
   }
 
-  const result = await db.batchCopy(ids, req.user.id, targetUserId);
+  const result = await materialService.batchCopy(ids, actualSourceUserId, targetUserId, isAdminUser);
 
   await logOperation(
     req.user,
     'batch_copy',
     'material',
     null,
-    `${result.copied} materials to user ${targetUserId}`,
+    `${result.copied} materials from user ${actualSourceUserId} to user ${targetUserId}`,
     getClientIp(req)
   );
 
@@ -324,25 +292,28 @@ router.post('/batch/copy', authenticateToken, asyncHandler(async (req, res) => {
 
 // Batch move
 router.post('/batch/move', authenticateToken, asyncHandler(async (req, res) => {
-  const { ids, targetUserId, targetFolder } = req.body;
+  const { ids, sourceUserId, targetUserId, targetFolder } = req.body;
 
   if (!ids || !Array.isArray(ids) || !targetUserId || !targetFolder) {
     return sendError(res, 'Missing required fields');
   }
 
-  // Only admin can move to other users
-  if (targetUserId !== req.user.id && !isAdmin(req)) {
+  const isAdminUser = isAdmin(req);
+  const actualSourceUserId = sourceUserId || req.user.id;
+
+  // Only admin can move from/to other users
+  if ((actualSourceUserId !== req.user.id || targetUserId !== req.user.id) && !isAdminUser) {
     return sendError(res, 'Permission denied', 403);
   }
 
-  const result = await db.batchMove(ids, req.user.id, targetUserId, targetFolder);
+  const result = await materialService.batchMove(ids, actualSourceUserId, targetUserId, targetFolder, isAdminUser);
 
   await logOperation(
     req.user,
     'batch_move',
     'material',
     null,
-    `${result.moved} materials to ${targetFolder}`,
+    `${result.moved} materials from user ${actualSourceUserId} to ${targetFolder} of user ${targetUserId}`,
     getClientIp(req)
   );
 
@@ -352,7 +323,7 @@ router.post('/batch/move', authenticateToken, asyncHandler(async (req, res) => {
 // Download material (video)
 router.get('/:id/download', authenticateToken, asyncHandler(async (req, res) => {
   const materialId = parseInt(req.params.id);
-  const material = await db.getMaterial(materialId);
+  const material = await materialService.getMaterial(materialId);
 
   if (!material) {
     return sendError(res, 'Material not found', 404);

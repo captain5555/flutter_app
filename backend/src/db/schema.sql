@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS materials (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   deleted_at DATETIME,
+  used_at DATETIME,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
