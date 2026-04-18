@@ -7,30 +7,51 @@ import 'package:dio/dio.dart';
 class MaterialService {
   final ApiService _apiService = ApiService();
 
-  Future<List<Material>> getUserMaterials(int userId, String folderType) async {
-    final response = await _apiService.dio.get(
-      ApiConstants.materialsByUser(userId, folderType),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = response.data;
-      return data.map((json) => Material.fromJson(json)).toList();
+  // 解析响应数据的通用方法
+  dynamic _parseResponse(Response response) {
+    final data = response.data;
+    if (data is Map && data.containsKey('data')) {
+      return data['data'];
     }
+    return data;
+  }
 
-    throw Exception('Failed to load materials');
+  Future<List<Material>> getUserMaterials(int userId, String folderType) async {
+    try {
+      final response = await _apiService.dio.get(
+        ApiConstants.materialsByUser(userId, folderType),
+      );
+
+      final parsed = _parseResponse(response);
+
+      if (parsed is List) {
+        return parsed.map((json) => Material.fromJson(json as Map<String, dynamic>)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      print('getUserMaterials 错误: $e');
+      return [];
+    }
   }
 
   Future<List<Material>> getTrashMaterials(int userId) async {
-    final response = await _apiService.dio.get(
-      ApiConstants.trashByUser(userId),
-    );
+    try {
+      final response = await _apiService.dio.get(
+        ApiConstants.trashByUser(userId),
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = response.data;
-      return data.map((json) => Material.fromJson(json)).toList();
+      final parsed = _parseResponse(response);
+
+      if (parsed is List) {
+        return parsed.map((json) => Material.fromJson(json as Map<String, dynamic>)).toList();
+      }
+
+      return [];
+    } catch (e) {
+      print('getTrashMaterials 错误: $e');
+      return [];
     }
-
-    throw Exception('Failed to load trash materials');
   }
 
   Future<Material> getMaterial(int id) async {
@@ -38,27 +59,24 @@ class MaterialService {
       ApiConstants.materialById(id),
     );
 
-    if (response.statusCode == 200) {
-      return Material.fromJson(response.data);
-    }
-
-    throw Exception('Failed to load material');
+    final parsed = _parseResponse(response);
+    return Material.fromJson(parsed as Map<String, dynamic>);
   }
 
   Future<Material> uploadMaterial({
     required int userId,
-    required File file,
+    required List<int> bytes,
+    required String fileName,
     required String folderType,
     String? title,
     String? description,
   }) async {
-    String fileName = file.path.split('/').last;
     FormData formData = FormData.fromMap({
       'userId': userId,
       'folderType': folderType,
       'title': title,
       'description': description,
-      'file': await MultipartFile.fromFile(file.path, filename: fileName),
+      'file': MultipartFile.fromBytes(bytes, filename: fileName),
     });
 
     final response = await _apiService.dio.post(
@@ -66,11 +84,8 @@ class MaterialService {
       data: formData,
     );
 
-    if (response.statusCode == 201) {
-      return Material.fromJson(response.data);
-    }
-
-    throw Exception('Failed to upload material');
+    final parsed = _parseResponse(response);
+    return Material.fromJson(parsed as Map<String, dynamic>);
   }
 
   Future<Material> updateMaterial(int id, {
@@ -90,11 +105,8 @@ class MaterialService {
       data: data,
     );
 
-    if (response.statusCode == 200) {
-      return Material.fromJson(response.data);
-    }
-
-    throw Exception('Failed to update material');
+    final parsed = _parseResponse(response);
+    return Material.fromJson(parsed as Map<String, dynamic>);
   }
 
   Future<void> moveToTrash(int id) async {

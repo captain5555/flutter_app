@@ -4,11 +4,31 @@ const path = require('path');
 const config = require('./config');
 const db = require('./config/database');
 const { initScheduledBackup } = require('./services/backup');
-const { sendError } = require('./utils/helpers');
+const { sendError, getClientIp } = require('./utils/helpers');
 const { initListeners } = require('./listeners');
 const { eventBus, events } = require('./events');
 
 const app = express();
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  const { method, originalUrl, headers } = req;
+  const ip = getClientIp(req);
+  const userAgent = headers['user-agent'] || 'unknown';
+
+  console.log(`[REQUEST] ${method} ${originalUrl} - IP: ${ip} - UA: ${userAgent.substring(0, 50)}...`);
+
+  // Log response
+  const originalEnd = res.end;
+  res.end = function(chunk, encoding) {
+    const duration = Date.now() - start;
+    console.log(`[RESPONSE] ${method} ${originalUrl} - Status: ${res.statusCode} - ${duration}ms`);
+    originalEnd.call(this, chunk, encoding);
+  };
+
+  next();
+});
 
 // Middleware
 app.use(cors({

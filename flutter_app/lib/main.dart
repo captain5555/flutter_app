@@ -72,7 +72,9 @@ class _AuthCheckState extends State<AuthCheck> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      print('=== 应用启动，加载设置 ===');
       await context.read<SettingsProvider>().loadSettings();
+      print('设置加载完成，API URL: ${context.read<SettingsProvider>().baseUrl}');
       if (mounted) {
         context.read<AuthProvider>().checkAuth();
       }

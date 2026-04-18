@@ -1,50 +1,46 @@
 import '../constants/api_constants.dart';
 import '../models/user.dart';
 import 'api_service.dart';
+import 'package:dio/dio.dart';
 
 class UserService {
   final ApiService _apiService = ApiService();
 
+  dynamic _parseResponse(Response response) {
+    final data = response.data;
+    if (data is Map && data.containsKey('data')) {
+      return data['data'];
+    }
+    return data;
+  }
+
   Future<List<User>> getUsers() async {
     final response = await _apiService.dio.get(ApiConstants.users);
+    final parsed = _parseResponse(response);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = response.data;
-      return data.map((json) => User.fromJson(json)).toList();
+    if (parsed is List) {
+      return parsed.map((json) => User.fromJson(json as Map<String, dynamic>)).toList();
     }
 
-    throw Exception('Failed to load users');
+    return [];
   }
 
   Future<User> getUser(int id) async {
     final response = await _apiService.dio.get('${ApiConstants.users}/$id');
-
-    if (response.statusCode == 200) {
-      return User.fromJson(response.data);
-    }
-
-    throw Exception('Failed to load user');
+    final parsed = _parseResponse(response);
+    return User.fromJson(parsed as Map<String, dynamic>);
   }
 
-  Future<User> createUser({
-    required String username,
-    required String password,
-    required String role,
-  }) async {
+  Future<User> createUser(String username, {String role = 'user'}) async {
     final response = await _apiService.dio.post(
       ApiConstants.users,
       data: {
         'username': username,
-        'password': password,
         'role': role,
       },
     );
-
-    if (response.statusCode == 201) {
-      return User.fromJson(response.data);
-    }
-
-    throw Exception('Failed to create user');
+    final parsed = _parseResponse(response);
+    return User.fromJson(parsed as Map<String, dynamic>);
   }
 
   Future<User> updateUser(
@@ -62,18 +58,13 @@ class UserService {
       '${ApiConstants.users}/$id',
       data: data,
     );
-
-    if (response.statusCode == 200) {
-      return User.fromJson(response.data);
-    }
-
-    throw Exception('Failed to update user');
+    final parsed = _parseResponse(response);
+    return User.fromJson(parsed as Map<String, dynamic>);
   }
 
   Future<void> deleteUser(int id) async {
     final response = await _apiService.dio.delete('${ApiConstants.users}/$id');
-
-    if (response.statusCode != 204) {
+    if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete user');
     }
   }

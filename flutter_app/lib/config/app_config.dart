@@ -13,4 +13,12 @@ class AppConfig {
     final box = TokenStorage.box;
     await box.put(_baseUrlKey, url);
   }
+
+  static Future<void> clearCache() async {
+    final box = TokenStorage.box;
+    // 保留base_url，清除其他缓存
+    final baseUrl = box.get(_baseUrlKey, defaultValue: defaultBaseUrl);
+    await box.clear();
+    await box.put(_baseUrlKey, baseUrl);
+  }
 }

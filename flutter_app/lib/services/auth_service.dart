@@ -7,6 +7,9 @@ class AuthService {
   final ApiService _apiService = ApiService();
 
   Future<User> login(String username, String password) async {
+    print('AuthService.login 被调用');
+    print('请求 API: ${_apiService.dio.options.baseUrl}${ApiConstants.loginSimple}');
+
     final response = await _apiService.dio.post(
       ApiConstants.loginSimple,
       data: {
@@ -15,8 +18,13 @@ class AuthService {
       },
     );
 
+    print('响应状态码: ${response.statusCode}');
+    print('响应数据: ${response.data}');
+
     if (response.statusCode == 200) {
-      final data = response.data;
+      // 后端返回格式: {success: true, data: {token: ..., user: ...}}
+      final responseData = response.data;
+      final data = responseData['data'] ?? responseData;
 
       await TokenStorage.saveToken(data['token']);
       if (data['refreshToken'] != null) {

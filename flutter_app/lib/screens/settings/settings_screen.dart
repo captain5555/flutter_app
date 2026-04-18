@@ -5,6 +5,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../constants/theme_constants.dart';
 import '../login/login_screen.dart';
+import '../admin/user_management_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -74,6 +75,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showClearCacheDialog() {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('清除缓存'),
+        content: const Text('确定要清除所有缓存吗？'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('取消'),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('清除'),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _clearCache();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearCache() async {
+    try {
+      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+      await settingsProvider.clearCache();
+
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('清除成功'),
+            content: const Text('缓存已清除'),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('确定'),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('清除失败'),
+            content: Text(e.toString()),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text('确定'),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -115,6 +179,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: Text(settingsProvider.baseUrl),
                       trailing: const CupertinoListTileChevron(),
                       onTap: _showApiUrlDialog,
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            // Cache Section
+            CupertinoListSection.insetGrouped(
+              header: const Text('缓存'),
+              children: [
+                CupertinoListTile(
+                  title: const Text('清除缓存'),
+                  trailing: const CupertinoListTileChevron(),
+                  onTap: _showClearCacheDialog,
+                ),
+              ],
+            ),
+
+            // Admin Section (only for admin)
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                if (authProvider.user?.role != 'admin') {
+                  return const SizedBox.shrink();
+                }
+                return CupertinoListSection.insetGrouped(
+                  header: const Text('管理'),
+                  children: [
+                    CupertinoListTile(
+                      title: const Text('用户管理'),
+                      trailing: const CupertinoListTileChevron(),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const UserManagementScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 );

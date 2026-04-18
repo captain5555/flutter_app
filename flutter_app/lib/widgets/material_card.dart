@@ -20,10 +20,38 @@ class MaterialCard extends StatelessWidget {
   });
 
   String? _getThumbnailUrl(String baseUrl) {
-    if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
-      return '$baseUrl${material.thumbnailPath}';
+    // 1. 优先使用后端提供的完整 thumbnail_url
+    if (material.thumbnailUrl != null && material.thumbnailUrl!.isNotEmpty) {
+      return _buildFullUrl(baseUrl, material.thumbnailUrl!);
     }
+    // 2. 其次使用 thumbnailPath
+    if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
+      return _buildFullUrl(baseUrl, material.thumbnailPath!);
+    }
+    // 3. 对于图片，如果没有缩略图，直接用 file_url 或 filePath
+    if (material.isImage) {
+      if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
+        return _buildFullUrl(baseUrl, material.fileUrl!);
+      }
+      if (material.filePath.isNotEmpty) {
+        return _buildFullUrl(baseUrl, material.filePath);
+      }
+    }
+    // 视频没有缩略图，返回null显示占位图标
     return null;
+  }
+
+  String _buildFullUrl(String baseUrl, String path) {
+    // 如果已经是完整URL，直接返回
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+    // 如果是以 / 开头，拼接到 baseUrl
+    if (path.startsWith('/')) {
+      return '$baseUrl$path';
+    }
+    // 其他情况，加上 /uploads/
+    return '$baseUrl/uploads/$path';
   }
 
   @override

@@ -51,4 +51,20 @@ class SettingsProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<void> clearCache() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      // 清除Hive缓存等
+      await AppConfig.clearCache();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

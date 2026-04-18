@@ -10,10 +10,20 @@ class Material {
   final int fileSize;
   final String filePath;
   final String? thumbnailPath;
+  final String? thumbnailUrl;
+  final String? fileUrl;
   final bool isDeleted;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
+
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return false;
+  }
 
   Material({
     required this.id,
@@ -27,6 +37,8 @@ class Material {
     required this.fileSize,
     required this.filePath,
     this.thumbnailPath,
+    this.thumbnailUrl,
+    this.fileUrl,
     this.isDeleted = false,
     this.createdAt,
     this.updatedAt,
@@ -58,10 +70,12 @@ class Material {
       fileSize: json['file_size'] is int ? json['file_size'] : int.parse(json['file_size']?.toString() ?? '0'),
       filePath: json['file_path'] as String? ?? json['oss_key'] as String? ?? '',
       thumbnailPath: json['thumbnail_path'] as String?,
-      isDeleted: json['is_deleted'] as bool? ?? false,
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at']) : null,
-      deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at']) : null,
+      thumbnailUrl: json['thumbnail_url'] as String? ?? json['thumbnailUrl'] as String?,
+      fileUrl: json['file_url'] as String? ?? json['fileUrl'] as String?,
+      isDeleted: _parseBool(json['is_deleted']),
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null,
+      deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at'].toString()) : null,
     );
   }
 
@@ -78,6 +92,8 @@ class Material {
       'file_size': fileSize,
       'file_path': filePath,
       'thumbnail_path': thumbnailPath,
+      'thumbnail_url': thumbnailUrl,
+      'file_url': fileUrl,
       'is_deleted': isDeleted,
     };
   }
@@ -94,6 +110,8 @@ class Material {
     int? fileSize,
     String? filePath,
     String? thumbnailPath,
+    String? thumbnailUrl,
+    String? fileUrl,
     bool? isDeleted,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -111,6 +129,8 @@ class Material {
       fileSize: fileSize ?? this.fileSize,
       filePath: filePath ?? this.filePath,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      fileUrl: fileUrl ?? this.fileUrl,
       isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

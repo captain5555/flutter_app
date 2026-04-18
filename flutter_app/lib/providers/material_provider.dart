@@ -6,6 +6,8 @@ import '../services/material_service.dart';
 class MaterialProvider with ChangeNotifier {
   final MaterialService _materialService = MaterialService();
 
+  MaterialService get materialService => _materialService;
+
   List<Material> _materials = [];
   List<Material> _trashMaterials = [];
   bool _isLoading = false;
@@ -60,7 +62,29 @@ class MaterialProvider with ChangeNotifier {
     ]);
   }
 
-  Future<bool> updateMaterial(Material material) async {
+  Future<void> updateMaterial(int id, Map<String, dynamic> data) async {
+    try {
+      final updated = await _materialService.updateMaterial(
+        id,
+        title: data['title'],
+        description: data['description'],
+        usageTag: data['usage_tag'],
+        viralTag: data['viral_tag'],
+      );
+
+      final index = _materials.indexWhere((m) => m.id == id);
+      if (index != -1) {
+        _materials[index] = updated;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<bool> updateMaterialObject(Material material) async {
     try {
       final updated = await _materialService.updateMaterial(
         material.id,
@@ -150,5 +174,32 @@ class MaterialProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<Material> uploadMaterial({
+    required int userId,
+    required List<int> bytes,
+    required String fileName,
+    required String folderType,
+    String? title,
+    String? description,
+  }) async {
+    try {
+      final material = await _materialService.uploadMaterial(
+        userId: userId,
+        bytes: bytes,
+        fileName: fileName,
+        folderType: folderType,
+        title: title,
+        description: description,
+      );
+      _materials.insert(0, material);
+      notifyListeners();
+      return material;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 }
