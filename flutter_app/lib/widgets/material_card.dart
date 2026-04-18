@@ -28,15 +28,16 @@ class MaterialCard extends StatelessWidget {
     if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
       return _buildFullUrl(baseUrl, material.thumbnailPath!);
     }
-    // 3. 使用 file_url（图片和视频都尝试）
-    if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
-      return _buildFullUrl(baseUrl, material.fileUrl!);
+    // 3. 只有图片才使用 file_url 或 filePath 作为预览
+    if (material.isImage) {
+      if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
+        return _buildFullUrl(baseUrl, material.fileUrl!);
+      }
+      if (material.filePath.isNotEmpty) {
+        return _buildFullUrl(baseUrl, material.filePath);
+      }
     }
-    // 4. 使用 filePath（图片和视频都尝试）
-    if (material.filePath.isNotEmpty) {
-      return _buildFullUrl(baseUrl, material.filePath);
-    }
-    // 没有缩略图，返回null显示占位图标
+    // 视频没有缩略图，返回null显示占位图标
     return null;
   }
 
@@ -186,12 +187,31 @@ class _PlaceholderIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: CupertinoColors.systemGrey5,
+      color: isVideo
+          ? CupertinoColors.systemGrey6
+          : CupertinoColors.systemGrey5,
       child: Center(
-        child: Icon(
-          isVideo ? CupertinoIcons.video_camera : CupertinoIcons.photo,
-          size: 40,
-          color: CupertinoColors.systemGrey3,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isVideo ? CupertinoIcons.video_camera : CupertinoIcons.photo,
+              size: isVideo ? 50 : 40,
+              color: isVideo
+                  ? CupertinoColors.systemGrey
+                  : CupertinoColors.systemGrey3,
+            ),
+            if (isVideo) ...[
+              const SizedBox(height: 8),
+              Text(
+                '视频素材',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: CupertinoColors.systemGrey,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
