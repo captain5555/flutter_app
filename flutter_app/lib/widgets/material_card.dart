@@ -28,16 +28,15 @@ class MaterialCard extends StatelessWidget {
     if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
       return _buildFullUrl(baseUrl, material.thumbnailPath!);
     }
-    // 3. 对于图片，如果没有缩略图，直接用 file_url 或 filePath
-    if (material.isImage) {
-      if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
-        return _buildFullUrl(baseUrl, material.fileUrl!);
-      }
-      if (material.filePath.isNotEmpty) {
-        return _buildFullUrl(baseUrl, material.filePath);
-      }
+    // 3. 使用 file_url（图片和视频都尝试）
+    if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
+      return _buildFullUrl(baseUrl, material.fileUrl!);
     }
-    // 视频没有缩略图，返回null显示占位图标
+    // 4. 使用 filePath（图片和视频都尝试）
+    if (material.filePath.isNotEmpty) {
+      return _buildFullUrl(baseUrl, material.filePath);
+    }
+    // 没有缩略图，返回null显示占位图标
     return null;
   }
 
@@ -83,8 +82,11 @@ class MaterialCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(ThemeConstants.borderRadiusMd),
                 ),
-                child: thumbnailUrl != null
-                    ? CachedNetworkImage(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (thumbnailUrl != null)
+                      CachedNetworkImage(
                         imageUrl: thumbnailUrl,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
@@ -97,7 +99,45 @@ class MaterialCard extends StatelessWidget {
                           isVideo: material.isVideo,
                         ),
                       )
-                    : _PlaceholderIcon(isVideo: material.isVideo),
+                    else
+                      _PlaceholderIcon(isVideo: material.isVideo),
+                    // Video indicator overlay
+                    if (material.isVideo)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.play_circle_fill,
+                                size: 12,
+                                color: CupertinoColors.white,
+                              ),
+                              SizedBox(width: 3),
+                              Text(
+                                '视频',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: CupertinoColors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
 
