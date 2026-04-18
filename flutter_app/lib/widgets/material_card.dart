@@ -54,6 +54,50 @@ class MaterialCard extends StatelessWidget {
     return '$baseUrl/uploads/$path';
   }
 
+  Color _getUsageTagColor(String tag) {
+    switch (tag) {
+      case 'used':
+        return CupertinoColors.systemGreen.withOpacity(0.15);
+      case 'viral_candidate':
+        return CupertinoColors.systemOrange.withOpacity(0.15);
+      default:
+        return CupertinoColors.systemGrey5;
+    }
+  }
+
+  Color _getUsageTagTextColor(String tag) {
+    switch (tag) {
+      case 'used':
+        return CupertinoColors.systemGreen;
+      case 'viral_candidate':
+        return CupertinoColors.systemOrange;
+      default:
+        return CupertinoColors.secondaryLabel;
+    }
+  }
+
+  Color _getViralTagColor(String tag) {
+    switch (tag) {
+      case 'viral':
+        return CupertinoColors.systemRed.withOpacity(0.15);
+      case 'monitoring':
+        return CupertinoColors.systemYellow.withOpacity(0.15);
+      default:
+        return CupertinoColors.systemGrey5;
+    }
+  }
+
+  Color _getViralTagTextColor(String tag) {
+    switch (tag) {
+      case 'viral':
+        return CupertinoColors.systemRed;
+      case 'monitoring':
+        return CupertinoColors.systemYellow;
+      default:
+        return CupertinoColors.secondaryLabel;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
@@ -161,12 +205,70 @@ class MaterialCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      material.fileSizeFormatted,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: CupertinoColors.secondaryLabel,
-                      ),
+                    Row(
+                      children: [
+                        // Usage tag
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getUsageTagColor(material.usageTag),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            material.usageTagLabel,
+                            style: TextStyle(
+                              fontSize: 8,
+                              color: _getUsageTagTextColor(material.usageTag),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Viral tag
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getViralTagColor(material.viralTag),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            material.viralTagLabel,
+                            style: TextStyle(
+                              fontSize: 8,
+                              color: _getViralTagTextColor(material.viralTag),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            material.fileSizeFormatted,
+                            style: const TextStyle(
+                              fontSize: 9,
+                              color: CupertinoColors.secondaryLabel,
+                            ),
+                          ),
+                        ),
+                        if (material.usedAtFormatted != null)
+                          Text(
+                            material.usedAtFormatted!,
+                            style: const TextStyle(
+                              fontSize: 8,
+                              color: CupertinoColors.tertiaryLabel,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

@@ -16,6 +16,7 @@ class Material {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
+  final DateTime? usedAt;
 
   static bool _parseBool(dynamic value) {
     if (value == null) return false;
@@ -43,6 +44,7 @@ class Material {
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
+    this.usedAt,
   });
 
   String get displayTitle => title ?? fileName;
@@ -55,6 +57,38 @@ class Material {
     if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
     if (fileSize < 1024 * 1024 * 1024) return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
     return '${(fileSize / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+  }
+
+  String get usageTagLabel {
+    switch (usageTag) {
+      case 'unused':
+        return '未使用';
+      case 'used':
+        return '已使用';
+      case 'viral_candidate':
+        return '爆款备选';
+      default:
+        return usageTag;
+    }
+  }
+
+  String get viralTagLabel {
+    switch (viralTag) {
+      case 'not_viral':
+        return '非爆款';
+      case 'monitoring':
+        return '待观察';
+      case 'viral':
+        return '爆款';
+      default:
+        return viralTag;
+    }
+  }
+
+  String? get usedAtFormatted {
+    if (usedAt == null) return null;
+    return '${usedAt!.year}-${usedAt!.month.toString().padLeft(2, '0')}-${usedAt!.day.toString().padLeft(2, '0')} '
+        '${usedAt!.hour.toString().padLeft(2, '0')}:${usedAt!.minute.toString().padLeft(2, '0')}';
   }
 
   factory Material.fromJson(Map<String, dynamic> json) {
@@ -76,6 +110,7 @@ class Material {
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
       updatedAt: json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null,
       deletedAt: json['deleted_at'] != null ? DateTime.tryParse(json['deleted_at'].toString()) : null,
+      usedAt: json['used_at'] != null ? DateTime.tryParse(json['used_at'].toString()) : null,
     );
   }
 
@@ -95,6 +130,7 @@ class Material {
       'thumbnail_url': thumbnailUrl,
       'file_url': fileUrl,
       'is_deleted': isDeleted,
+      'used_at': usedAt?.toIso8601String(),
     };
   }
 
@@ -116,6 +152,7 @@ class Material {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
+    DateTime? usedAt,
   }) {
     return Material(
       id: id ?? this.id,
@@ -135,6 +172,7 @@ class Material {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      usedAt: usedAt ?? this.usedAt,
     );
   }
 }
