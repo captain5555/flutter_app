@@ -20,15 +20,15 @@ class MaterialCard extends StatelessWidget {
   });
 
   String? _getThumbnailUrl(String baseUrl) {
-    // 1. 优先使用后端提供的完整 thumbnail_url
+    // 1. Prefer using complete thumbnail_url from backend (for both images and videos)
     if (material.thumbnailUrl != null && material.thumbnailUrl!.isNotEmpty) {
       return _buildFullUrl(baseUrl, material.thumbnailUrl!);
     }
-    // 2. 其次使用 thumbnailPath
+    // 2.其次使用 thumbnailPath
     if (material.thumbnailPath != null && material.thumbnailPath!.isNotEmpty) {
       return _buildFullUrl(baseUrl, material.thumbnailPath!);
     }
-    // 3. 只有图片才使用 file_url 或 filePath 作为预览
+    // 3. Only images use file_url or filePath as preview (videos don't use the video itself as thumbnail)
     if (material.isImage) {
       if (material.fileUrl != null && material.fileUrl!.isNotEmpty) {
         return _buildFullUrl(baseUrl, material.fileUrl!);
@@ -37,7 +37,7 @@ class MaterialCard extends StatelessWidget {
         return _buildFullUrl(baseUrl, material.filePath);
       }
     }
-    // 视频没有缩略图，返回null显示占位图标
+    // For videos without thumbnail, return null to show placeholder icon
     return null;
   }
 
@@ -294,7 +294,7 @@ class _PlaceholderIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: isVideo
-          ? CupertinoColors.systemGrey6
+          ? CupertinoColors.systemGrey5
           : CupertinoColors.systemGrey5,
       child: Center(
         child: Column(
@@ -304,13 +304,13 @@ class _PlaceholderIcon extends StatelessWidget {
               isVideo ? CupertinoIcons.video_camera : CupertinoIcons.photo,
               size: isVideo ? 50 : 40,
               color: isVideo
-                  ? CupertinoColors.systemGrey
+                  ? CupertinoColors.systemGrey2
                   : CupertinoColors.systemGrey3,
             ),
             if (isVideo) ...[
               const SizedBox(height: 8),
               Text(
-                'Video',
+                'Video Material',
                 style: TextStyle(
                   fontSize: 12,
                   color: CupertinoColors.systemGrey,

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const AbstractStorage = require('./abstract');
 const sharp = require('sharp');
+const ffmpeg = require('fluent-ffmpeg');
 
 class LocalStorage extends AbstractStorage {
   constructor() {
@@ -46,10 +47,15 @@ class LocalStorage extends AbstractStorage {
       fs.writeFileSync(fullPath, fileBuffer);
     }
 
-    // Generate thumbnail for images
+    // Generate thumbnail for images and videos
     let thumbnailPath = null;
-    if (options.generateThumbnail && options.isImage) {
-      thumbnailPath = await this.generateThumbnail(fileBuffer, filePath);
+    if (options.generateThumbnail) {
+      if (options.isImage) {
+        thumbnailPath = await this.generateImageThumbnail(fileBuffer, filePath);
+      } else {
+        // For videos, generate thumbnail from the video file
+        thumbnailPath = await this.generateVideoThumbnail(fullPath, filePath);
+      }
     }
 
     return {
@@ -59,7 +65,7 @@ class LocalStorage extends AbstractStorage {
     };
   }
 
-  async generateThumbnail(fileBuffer, originalPath) {
+  async generateImageThumbnail(fileBuffer, originalPath) {
     const ext = path.extname(originalPath);
     const baseName = path.basename(originalPath, ext);
     const thumbnailName = `${baseName}_thumb.jpg`;
@@ -74,9 +80,34 @@ class LocalStorage extends AbstractStorage {
 
       return thumbnailPath;
     } catch (err) {
-      console.error('Thumbnail generation failed:', err);
+      console.error('Image thumbnail generation failed:', err);
       return null;
     }
+  }
+
+  async generateVideoThumbnail(videoPath, originalPath) {
+    const ext = path.extname(originalPath);
+    const baseName = path.basename(originalPath, ext);
+    const thumbnailName = `${baseName}_thumb.jpg`;
+    const thumbnailPath = path.join('thumbnails', thumbnailName);
+    const fullThumbnailPath = path.join(this.basePath, thumbnailPath);
+
+    return new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .on('end', () => {
+          resolve(thumbnailPath);
+        })
+        .on('error', (err) => {
+          console.error('Video thumbnail generation failed:', err);
+          resolve(null);
+        })
+        .screenshots({
+          count: 1,
+          folder: path.dirname(fullThumbnailPath),
+          filename: path.basename(fullThumbnailPath),
+          size: '200x200'
+        });
+    });
   }
 
   async deleteFile(filePath) {
